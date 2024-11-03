@@ -1,6 +1,7 @@
 package com.example.examplemod;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -11,6 +12,9 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 
 public class TickingBlock extends Block implements EntityBlock{
     public TickingBlock(BlockBehaviour.Properties properties) {
@@ -27,5 +31,14 @@ public class TickingBlock extends Block implements EntityBlock{
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         return type == ExampleMod.TICKING_BLOCK_ENTITY.get() ? (lvl, pos, st, be) -> TickingBlockEntity.tick(lvl, pos, st, (TickingBlockEntity)be) : null;
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        if (level.getBlockEntity(pos) instanceof TickingBlockEntity blockEntity) {
+            if (placer instanceof ServerPlayer player) {
+                blockEntity.setPlacingPlayerUUID(player.getUUID());
+            }
+        }
     }
 }
