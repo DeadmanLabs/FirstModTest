@@ -24,6 +24,7 @@ public class TickingBlockEntity extends BlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger(TickingBlockEntity.class);
     private int tickCount = 0;
     private UUID placingPlayerUUID;
+    public ChunkMiner manager;
 
     public TickingBlockEntity(BlockPos pos, BlockState state) {
         super(ExampleMod.TICKING_BLOCK_ENTITY.get(), pos, state);
@@ -32,21 +33,29 @@ public class TickingBlockEntity extends BlockEntity {
 
     public void setPlacingPlayerUUID(UUID uuid) {
         this.placingPlayerUUID = uuid;
+        if (this.level instanceof ServerLevel serverLevel) {
+            this.manager = new ChunkMiner(serverLevel);
+        } else {
+            LOGGER.info("Set owner but could not get instance of ServerLevel");
+        }
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, TickingBlockEntity blockEntity) {
         if (!level.isClientSide) {
             blockEntity.tickCount++;
-            LOGGER.info("Tick count at position {}: {}", pos, blockEntity.tickCount);
-            if (blockEntity.tickCount % 20 == 0) {
-                if (blockEntity.placingPlayerUUID != null && level instanceof ServerLevel serverLevel) {
+            //LOGGER.info("Tick count at position {}: {}", pos, blockEntity.tickCount);
+                if (blockEntity.placingPlayerUUID != null && level instanceof ServerLevel serverLevel && blockEntity.manager != null) {
                     Player player = serverLevel.getPlayerByUUID(blockEntity.placingPlayerUUID);
                     if (player != null) {
-                        player.getInventory().add(new ItemStack(Items.EMERALD));
-                        LOGGER.info("Gave 1 emerald to player: {}", player.getName().getString());
+                        if (blockEntity.manager.itemsToGive.size() <= 0) {
+                            blockEntity.manager.startMining();
+                        }
+                        ItemStack item = blockEntity.manager.itemsToGive.poll();
+                        if (item != null) {
+                            player.getInventory().add(item);
+                        }
                     }
                 }
-            }
         }
     }
 
