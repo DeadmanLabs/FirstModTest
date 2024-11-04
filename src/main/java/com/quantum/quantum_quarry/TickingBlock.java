@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.quantum.quantum_quarry;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -30,7 +30,7 @@ public class TickingBlock extends Block implements EntityBlock{
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return type == ExampleMod.TICKING_BLOCK_ENTITY.get() ? (lvl, pos, st, be) -> TickingBlockEntity.tick(lvl, pos, st, (TickingBlockEntity)be) : null;
+        return type == QuantumQuarry.TICKING_BLOCK_ENTITY.get() ? (lvl, pos, st, be) -> TickingBlockEntity.tick(lvl, pos, st, (TickingBlockEntity)be) : null;
     }
 
     @Override

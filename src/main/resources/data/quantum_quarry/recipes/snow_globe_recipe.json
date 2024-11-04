@@ -1,0 +1,39 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "pattern": [
+        "abc",
+        "def",
+        "gh"
+    ],
+    "key": {
+        "a": {
+            "item": "minecraft:glass"
+        },
+        "b": {
+            "item": "minecraft:saplings"
+        },
+        "c": {
+            "item": "minecraft:snowball"
+        },
+        "d": {
+            "item": "minecraft:oak_door"
+        },
+        "e": {
+            "item": "minecraft:logs"
+        },
+        "f": {
+            "item": "minecraft:grass_block"
+        },
+        "g": {
+            "item": "minecraft:ender_pearl"
+        },
+        "h": {
+            "item": "minecraft:nether_star"
+        }
+    },
+    "result": {
+        "item": "quantum_quarry:snow_globe",
+        "count": 1
+    }
+}

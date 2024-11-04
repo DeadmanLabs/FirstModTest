@@ -1,0 +1,19 @@
+{
+    "variants": {
+        "facing=north": {
+            "model": "quantum_quarry:block/miner"
+        },
+        "facing=east": {
+            "model": "quantum_quarry:block/miner",
+            "y": 90
+        },
+        "facing=south": {
+            "model": "quantum_quarry:block/miner",
+            "y": 180
+        },
+        "facing=west": {
+            "model": "quantum_quarry:block/miner",
+            "y": 270
+        }
+    }
+}

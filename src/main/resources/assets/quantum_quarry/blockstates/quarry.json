@@ -1,0 +1,7 @@
+{
+    "variants": {
+        "": {
+            "model": "quantum_quarry:block/quarry"
+        }
+    }
+}

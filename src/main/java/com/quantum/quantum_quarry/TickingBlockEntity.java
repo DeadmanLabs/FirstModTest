@@ -1,4 +1,4 @@
-package com.example.examplemod;
+package com.quantum.quantum_quarry;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
@@ -27,7 +27,7 @@ public class TickingBlockEntity extends BlockEntity {
     public ChunkMiner manager;
 
     public TickingBlockEntity(BlockPos pos, BlockState state) {
-        super(ExampleMod.TICKING_BLOCK_ENTITY.get(), pos, state);
+        super(QuantumQuarry.TICKING_BLOCK_ENTITY.get(), pos, state);
         LOGGER.info("TickingBlockEntity created at position: {}", pos);
     }
 

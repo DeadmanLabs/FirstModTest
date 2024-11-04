@@ -1,0 +1,30 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "pattern": [
+        "aba",
+        "aca",
+        "ded"
+    ],
+    "key": {
+        "a": {
+            "item": "minecraft:end_stone"
+        },
+        "b": {
+            "item": "minecraft:end_rod"
+        },
+        "c": {
+            "item": "minecraft:diamond_pickaxe"
+        },
+        "d": {
+            "item": "minecraft:obsidian"
+        },
+        "e": {
+            "item": "minecraft:redstone_block"
+        }
+    },
+    "result": {
+        "item": "quantum_quarry:miner",
+        "count": 1
+    }
+}
