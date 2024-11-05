@@ -93,6 +93,6 @@ public class QuantumMinerScreenScreen extends AbstractContainerScreen<QuantumMin
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
         guistate.put("button:button_empty", button_empty);
         this.addRenderableWidget(button_empty);
-        imagebutton_redstone_resize = new ImageButton(this.leftPos + 6, this.topPos + 59, 16, 16, 0, 0, 16, )
+        //imagebutton_redstone_resize = new ImageButton(this.leftPos + 6, this.topPos + 59, 16, 16, 0, 0, 16, )
     }
 }
