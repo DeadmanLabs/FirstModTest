@@ -24,8 +24,8 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import com.quantum.quantum_quarry.QuantumQuarry;
 import com.quantum.quantum_quarry.helpers.ChunkMiner;
+import com.quantum.quantum_quarry.init.BlockEntities;
 
 public class QuarryBlockEntity extends BlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);
@@ -37,7 +37,7 @@ public class QuarryBlockEntity extends BlockEntity {
     private BlockPos location;
 
     public QuarryBlockEntity(BlockPos pos, BlockState state) {
-        super(QuantumQuarry.QUARRY_BLOCK_ENTITY.get(), pos, state);
+        super(BlockEntities.QUARRY_BLOCK_ENTITY.get(), pos, state);
         this.location = pos;
         LOGGER.info("Quantum Miner created at position: {}", pos);    
     }

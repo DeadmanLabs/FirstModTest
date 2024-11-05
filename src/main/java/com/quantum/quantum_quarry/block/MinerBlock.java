@@ -18,7 +18,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
-import com.quantum.quantum_quarry.QuantumQuarry;
+import com.quantum.quantum_quarry.init.BlockEntities;
 
 public class MinerBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
@@ -36,7 +36,7 @@ public class MinerBlock extends Block implements EntityBlock {
     @Nullable
     @Override
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return type == QuantumQuarry.QUARRY_BLOCK_ENTITY.get() ? (lvl, pos, st, be) -> QuarryBlockEntity.tick(lvl, pos, st, (QuarryBlockEntity)be) : null;
+        return type == BlockEntities.QUARRY_BLOCK_ENTITY.get() ? (lvl, pos, st, be) -> QuarryBlockEntity.tick(lvl, pos, st, (QuarryBlockEntity)be) : null;
     }
 
     @Override
