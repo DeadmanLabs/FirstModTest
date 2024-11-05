@@ -13,6 +13,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import java.util.HashMap;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.quantum.quantum_quarry.world.inventory.QuantumMinerScreenMenu;
 
 public class QuantumMinerScreenScreen extends AbstractContainerScreen<QuantumMinerScreenMenu> {
     private final static HashMap<String, Object> guistate = QuantumMinerScreenMenu.guistate;
@@ -54,5 +55,44 @@ public class QuantumMinerScreenScreen extends AbstractContainerScreen<QuantumMin
         guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 25, this.topPos + 80, 0, 0, 16, 16, 16, 16);
         guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/energy_cell_level_0.png"), this.leftPos + 153, this.topPos + 81, 0, 0, 16, 16, 16, 16);
         RenderSystem.disableBlend();
+    }
+
+    @Override
+    public boolean keyPressed(int key, int b, int c) {
+        if (key == 256) {
+            this.minecraft.player.closeContainer();
+            return true;
+        }
+        return super.keyPressed(key, b, c);
+    }
+
+    @Override
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_quantum_miner"), 6, 4, -12829636, false);
+        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_quarry_level"), 24, 17, -12829636, false);
+        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_blocks_mined"), 24, 28, -12829636, false);
+        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_biome"), 24, 39, -12829636, false);
+        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_0"), 93, 18, -12829636, false);
+        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_01"), 93, 28, -12829636, false);
+        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_none"), 56, 39, -12829636, false);
+    }
+
+    @Override
+    public void onClose() {
+        super.onClose();
+    }
+
+    @Override
+    public void init() {
+        super.init();
+        button_empty = Button.builder(Component.translatable(""), e -> {
+            if (true) {
+                QuantumQuarryMod.PACKET_HANDLER.sendToServer(new QuantumMinerScreenButtonMessage(0, x, y, z));
+                QuantumMinerScreenButtonMessage.handleButtonAction(entity, 0, x, y, z);
+            }
+        }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
+        guistate.put("button:button_empty", button_empty);
+        this.addRenderableWidget(button_empty);
+        imagebutton_redstone_resize = new ImageButton(this.leftPos + 6, this.topPos + 59, 16, 16, 0, 0, 16, )
     }
 }
