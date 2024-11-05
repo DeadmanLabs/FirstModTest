@@ -1,4 +1,4 @@
-package com.quantum.quantum_quarry;
+package com.quantum.quantum_quarry.world.inventory;
 
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.Level;
@@ -14,9 +14,15 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.core.BlockPos;
 
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemStackHandler;
+
 import java.util.function.Supplier;
 import java.util.Map;
 import java.util.HashMap;
+
+import com.quantum.quantum_quarry.init.Menus;
+import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 
 public class QuantumMinerScreenMenu extends AbstractContainerMenu implements Supplier<Map<Integer, Slot>> {
     public final static HashMap<String, Object> guistate = new HashMap<>();
@@ -94,7 +100,7 @@ public class QuantumMinerScreenMenu extends AbstractContainerMenu implements Sup
                 return this.boundItemMatcher.get();
             } else if (this.boundBlockEntity != null) {
                 return AbstractContainerMenu.stillValid(this.access, player, this.boundBlockEntity.getBlockState().getBlock());
-            } else if (this.bountEntity != null) {
+            } else if (this.boundEntity != null) {
                 return this.boundEntity.isAlive();
             }
         }
@@ -156,7 +162,7 @@ public class QuantumMinerScreenMenu extends AbstractContainerMenu implements Sup
                 }
                 Slot slot = this.slots.get(i);
                 ItemStack itemstack = slot.getItem();
-                if (slot.mayPlace(itemstack) && !itemstack.isEmpty() && ItemStack.isSameItemSameTag(p_38904, itemstack)) {
+                if (slot.mayPlace(itemstack) && !itemstack.isEmpty() && ItemStack.isSameItemSameComponents(p_38904, itemstack)) {
                     int j = itemstack.getCount() + p_38904.getCount();
                     int maxSize = Math.min(slot.getMaxStackSize(), p_38904.getMaxStackSize());
                     if (j <= maxSize) {

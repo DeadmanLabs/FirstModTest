@@ -24,8 +24,8 @@ import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import com.quantum.quantum_quarry.ChunkMiner;
 import com.quantum.quantum_quarry.QuantumQuarry;
+import com.quantum.quantum_quarry.helpers.ChunkMiner;
 
 public class QuarryBlockEntity extends BlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);

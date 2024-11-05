@@ -1,4 +1,4 @@
-package com.quantum.quantum_quarry;
+package com.quantum.quantum_quarry.procedures;
 
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.core.BlockPos;

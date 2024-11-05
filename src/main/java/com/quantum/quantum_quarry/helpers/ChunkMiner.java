@@ -1,4 +1,4 @@
-package com.quantum.quantum_quarry;
+package com.quantum.quantum_quarry.helpers;
 
 import java.util.LinkedList;
 import java.util.List;
