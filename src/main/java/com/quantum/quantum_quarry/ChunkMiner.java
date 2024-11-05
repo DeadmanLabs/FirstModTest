@@ -21,12 +21,16 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.material.FluidState;
+
+import net.neoforged.neoforge.fluids.FluidStack;
 
 public class ChunkMiner {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkMiner.class);
 
     private final ServerLevel level;
     public final Queue<ItemStack> itemsToGive = new LinkedList<>();
+    public final Queue<FluidStack> fluidsToGive = new LinkedList<>();
 
     public ChunkMiner(ServerLevel level) {
         this.level = level;
@@ -72,9 +76,16 @@ public class ChunkMiner {
             BlockState state = chunk.getBlockState(pos);
             Block block = state.getBlock();
             if (block != Blocks.AIR) {
-                BlockEntity blockEntity = chunk.getBlockEntity(pos);
-                List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity);
-                itemsToGive.addAll(drops);
+                FluidState fluidState = state.getFluidState();
+                if (!fluidState.isEmpty() && fluidState.isSource()) {
+                    FluidStack fluidStack = new FluidStack(fluidState.getType(), 1000);
+                    fluidsToGive.add(fluidStack);
+                }
+                else {
+                    BlockEntity blockEntity = chunk.getBlockEntity(pos);
+                    List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity);
+                    itemsToGive.addAll(drops);
+                }
             }
         }
     }
