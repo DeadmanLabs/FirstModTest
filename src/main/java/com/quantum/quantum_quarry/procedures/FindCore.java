@@ -4,6 +4,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.LevelAccessor;
 
+import com.quantum.quantum_quarry.init.ModBlocks;
+
 public class FindCore {
     public static double[] execute(LevelAccessor world, double x, double y, double z, Entity entity) {
         if (entity == null)
@@ -11,7 +13,7 @@ public class FindCore {
         double rootX = 0;
         double rootY = 0;
         double rootZ = 0;
-        boolean rootFound = true;
+        boolean rootFound = false;
         BlockPos[] positions = {
             BlockPos.containing(x + 1, y, z),
             BlockPos.containing(x - 1, y, z),
@@ -21,11 +23,12 @@ public class FindCore {
             BlockPos.containing(x, y, z - 1)
         };
         for (BlockPos pos : positions) {
-            if (world.getBlockState(pos).getBlock() == Blocks.QUARRY.get()) {
-                rootX = pos.x;
-                rootY = pos.y;
-                rootZ = pos.z;
+            if (world.getBlockState(pos).getBlock() == ModBlocks.QUARRY.get()) {
+                rootX = pos.getX();
+                rootY = pos.getY();
+                rootZ = pos.getZ();
                 rootFound = true;
+                break;
             }
         }
         if (rootFound) {
@@ -46,7 +49,7 @@ public class FindCore {
         };
         boolean valid = true;
         for (BlockPos pos : positions) {
-            valid = valid && (world.getBlockState(pos).getBlock() == Blocks.MINER.get());
+            valid = valid && (world.getBlockState(pos).getBlock() == ModBlocks.MINER.get());
         }
         return valid;
     }

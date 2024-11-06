@@ -17,6 +17,9 @@ import net.minecraft.core.BlockPos;
 
 import io.netty.buffer.Unpooled;
 
+import com.quantum.quantum_quarry.init.ModBlocks;
+import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
+
 public class RightClicked {
     public static void execute(LevelAccessor world, double x, double y, double z, Entity entity) {
         if (entity == null)
@@ -31,7 +34,7 @@ public class RightClicked {
         };
         BlockPos rootPos = null;
         for (BlockPos pos : positions) {
-            if (world.getBlockState(pos).getBlock() == Blocks.QUARRY.get()) {
+            if (world.getBlockState(pos).getBlock() == ModBlocks.QUARRY.get()) {
                 rootPos = pos;
                 break;
             }
@@ -56,7 +59,7 @@ public class RightClicked {
         };
 
         for (BlockPos pos : surroundingPositions) {
-            if (world.getBlockState(pos).getBlock() != Blocks.MINER.get()) {
+            if (world.getBlockState(pos).getBlock() != ModBlocks.MINER.get()) {
                 return false;
             }
         }
@@ -80,7 +83,7 @@ public class RightClicked {
     private static void openScreen(Entity entity, double x, double y, double z) {
         if (entity instanceof ServerPlayer player) {
             BlockPos pos = BlockPos.containing(x, y, z);
-            NetworkHooks.openScreen(player, new MenuProvider() {
+            player.openMenu(new MenuProvider() {
                 @Override
                 public Component getDisplayName() {
                     return Component.literal("QuantumMinerScreen");
@@ -90,7 +93,7 @@ public class RightClicked {
                 public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
                     return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(pos));
                 }
-            }, pos);
+            }, buf -> buf.writeBlockPos(pos));
         }
     }
 

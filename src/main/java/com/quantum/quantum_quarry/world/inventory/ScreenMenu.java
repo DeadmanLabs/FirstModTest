@@ -24,7 +24,7 @@ import java.util.HashMap;
 import com.quantum.quantum_quarry.init.Menus;
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 
-public class QuantumMinerScreenMenu extends AbstractContainerMenu implements Supplier<Map<Integer, Slot>> {
+public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<Integer, Slot>> {
     public final static HashMap<String, Object> guistate = new HashMap<>();
     public final Level world;
     public final Player entity;
@@ -37,7 +37,7 @@ public class QuantumMinerScreenMenu extends AbstractContainerMenu implements Sup
     private Entity boundEntity = null;
     private BlockEntity boundBlockEntity = null;
 
-    public QuantumMinerScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
+    public ScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
         super(Menus.QUANTUM_MINER_SCREEN.get(), id);
         this.entity = inv.player;
         this.world = inv.player.level();

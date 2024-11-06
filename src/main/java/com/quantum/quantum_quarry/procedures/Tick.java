@@ -22,9 +22,9 @@ public class Tick {
         };
         for (BlockPos pos : positions) {
             if (world.getBlockState(pos).getBlock() == ModBlocks.QUARRY.get()) {
-                rootX = pos.x;
-                rootY = pos.y;
-                rootZ = pos.z;
+                rootX = pos.getX();
+                rootY = pos.getY();
+                rootZ = pos.getZ();
                 rootFound = true;
             }
         }
