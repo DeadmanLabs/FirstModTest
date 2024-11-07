@@ -16,6 +16,8 @@ import net.minecraft.core.BlockPos;
 
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.SlotItemHandler;
 
 import java.util.function.Supplier;
 import java.util.Map;
@@ -23,6 +25,7 @@ import java.util.HashMap;
 
 import com.quantum.quantum_quarry.init.Menus;
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
+import com.quantum.quantum_quarry.init.ModItems;
 
 public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<Integer, Slot>> {
     public final static HashMap<String, Object> guistate = new HashMap<>();
@@ -37,6 +40,7 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
     private Entity boundEntity = null;
     private BlockEntity boundBlockEntity = null;
 
+    /*
     public ScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
         super(Menus.QUANTUM_MINER_SCREEN.get(), id);
         this.entity = inv.player;
@@ -92,6 +96,45 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         for (int si = 0; si < 9; ++si)
             this.addSlot(new Slot(inv, si, 0 + 8 + si * 18, 15 + 142));
     }
+    */
+
+    public ScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
+        super(Menus.QUANTUM_MINER_SCREEN.get(), id);
+        this.entity = inv.player;
+        this.world = inv.player.level();
+        BlockPos pos = extraData.readBlockPos();
+        this.x = pos.getX();
+        this.y = pos.getY();
+        this.z = pos.getZ();
+
+        IItemHandler itemHandler = world.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
+        if (itemHandler != null) {
+            this.internal = itemHandler;
+        } else {
+            this.internal = new ItemStackHandler(2);
+        }
+
+        this.customSlots.put(0, this.addSlot(new SlotItemHandler(internal, 0, 6, 18) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.getItem() == Items.ENCHANTED_BOOK;
+            }
+        }));
+        this.customSlots.put(1, this.addSlot(new SlotItemHandler(internal, 1, 6, 38) {
+            @Override
+            public boolean mayPlace(ItemStack stack) {
+                return stack.getItem() == ModItems.BIOME_MARKER.get();
+            }
+        }));
+        for (int row = 0; row < 3; ++row) {
+            for (int col = 0; col < 9; ++col) {
+                this.addSlot(new Slot(inv, col + row * 9 + 9, 8 + col * 18, 84 + row * 18));
+            }
+        }
+        for (int col = 0; col < 9; ++col) {
+            this.addSlot(new Slot(inv, col, 8 + col * 18, 142));
+        }
+    }
 
     @Override
     public boolean stillValid(Player player) {
@@ -110,7 +153,7 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
     @Override
     public ItemStack quickMoveStack(Player playerIn, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = (Slot)this.slots.get(index);
+        Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();

@@ -4,6 +4,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+
+
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import com.quantum.quantum_quarry.world.inventory.QuantumMinerScreenMenu;
 import com.quantum.quantum_quarry.QuantumQuarryMod;
@@ -12,7 +18,7 @@ import com.quantum.quantum_quarry.block.entity.MinerBlockEntity;
 import java.util.function.Supplier;
 import java.util.HashMap;
 
-public class ButtonMessage {
+public class ButtonMessage implements CustomPacketPayload {
     private final int buttonID, x, y, z;
 
     public ButtonMessage(FriendlyByteBuf buffer) {
@@ -23,10 +29,10 @@ public class ButtonMessage {
     }
 
     public ButtonMessage(int buttonID, int x, int y, int z) {
-        this.buttonID = buffer.readInt();
-        this.x = buffer.readInt();
-        this.y = buffer.readInt();
-        this.z = buffer.readInt();
+        this.buttonID = buttonID;
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     public static void buffer(ButtonMessage message, FriendlyByteBuf buffer) {
@@ -36,16 +42,14 @@ public class ButtonMessage {
         buffer.writeInt(message.z);
     }
 
-    public static void handler(ButtonMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
-        NetworkEvent.Context context = contextSupplier.get();
-        context.enqueueWork(() -> {
-            Player entity = context.getSender();
+    public ResourceLocation getType() {
+        return ResourceLocation.fromNamespaceAndPath("quantum_quarry", "button_message");
+    }
+
+    public static void handler(ButtonMessage message, IPayloadContext context) {
+        if (context.player() != null && context.player() instanceof ServerPlayer serverPlayer) {
             int buttonID = message.buttonID;
-            int x = message.x;
-            int y = message.y;
-            int z = message.z;
-            handleButtonAction(entity, buttonID x, y, z);
-        });
-        context.setPacketHandled(true);
+            BlockPos pos = new BlockPos(message.x, message.y, message.z);
+        }
     }
 }

@@ -15,7 +15,7 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 
 import com.quantum.quantum_quarry.QuantumQuarry;
-import com.quantum.quantum_quarry.client.gui.QuantumMinerScreenScreen;
+import com.quantum.quantum_quarry.client.gui.Screen;
 
 @EventBusSubscriber(modid = QuantumQuarry.MODID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class Screens {
@@ -23,7 +23,7 @@ public class Screens {
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
         event.register(
             Menus.QUANTUM_MINER_SCREEN.get(),
-            QuantumMinerScreenScreen::new
+            Screen::new
         );
     }
 }

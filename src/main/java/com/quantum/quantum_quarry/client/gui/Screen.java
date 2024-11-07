@@ -9,21 +9,23 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.WidgetSprites;
 
 import java.util.HashMap;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.quantum.quantum_quarry.world.inventory.QuantumMinerScreenMenu;
+import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
+import com.quantum.quantum_quarry.network.ButtonMessage;
 
-public class QuantumMinerScreenScreen extends AbstractContainerScreen<QuantumMinerScreenMenu> {
-    private final static HashMap<String, Object> guistate = QuantumMinerScreenMenu.guistate;
+public class Screen extends AbstractContainerScreen<ScreenMenu> {
+    private final static HashMap<String, Object> guistate = ScreenMenu.guistate;
     private final Level world;
     private final int x, y, z;
     private final Player entity;
     Button button_empty;
-    ImageButton imagebutton_redstone_resize;
+    ImageButton RedstoneModeButton;
 
-    public QuantumMinerScreenScreen(QuantumMinerScreenMenu container, Inventory inventory, Component text) {
+    public Screen(ScreenMenu container, Inventory inventory, Component text) {
         super(container, inventory, text);
         this.world = container.world;
         this.x = container.x;
@@ -38,7 +40,7 @@ public class QuantumMinerScreenScreen extends AbstractContainerScreen<QuantumMin
 
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(guiGraphics);
+        this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
@@ -85,14 +87,19 @@ public class QuantumMinerScreenScreen extends AbstractContainerScreen<QuantumMin
     @Override
     public void init() {
         super.init();
-        button_empty = Button.builder(Component.translatable(""), e -> {
+        button_empty = Button.builder(Component.translatable("gui.quantum_quarry.quantum_miner_screen.button_empty"), e -> {
             if (true) {
-                QuantumQuarryMod.PACKET_HANDLER.sendToServer(new QuantumMinerScreenButtonMessage(0, x, y, z));
-                QuantumMinerScreenButtonMessage.handleButtonAction(entity, 0, x, y, z);
+                QuantumQuarryMod.PACKET_HANDLER.sendToServer(new ButtonMessage(0, x, y, z));
+                ButtonMessage.handleButtonAction(entity, 0, x, y, z);
             }
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
         guistate.put("button:button_empty", button_empty);
         this.addRenderableWidget(button_empty);
+        ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/atlas/imagebutton_redstone_resize.png");
+        WidgetSprites buttonSprites = new WidgetSprites(texture, texture);
+        RedstoneModeButton = new ImageButton(this.leftPos + 6, this.topPos + 59, 16, 16, null, e -> {
+
+        });
         //imagebutton_redstone_resize = new ImageButton(this.leftPos + 6, this.topPos + 59, 16, 16, 0, 0, 16, )
     }
 }
