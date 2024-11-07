@@ -20,14 +20,22 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
 
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import com.quantum.quantum_quarry.helpers.ChunkMiner;
 import com.quantum.quantum_quarry.init.BlockEntities;
+import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
 
-public class QuarryBlockEntity extends BlockEntity {
+import io.netty.buffer.Unpooled;
+
+public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);
     private UUID owner;
     public ChunkMiner manager;
@@ -35,10 +43,12 @@ public class QuarryBlockEntity extends BlockEntity {
     private final EnergyStorage energyStorage = new EnergyStorage(200000);
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
     private BlockPos location;
+    private int mode;
 
     public QuarryBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.QUARRY_BLOCK_ENTITY.get(), pos, state);
         this.location = pos;
+        this.mode = 0;
         LOGGER.info("Quantum Miner created at position: {}", pos);    
     }
 
@@ -65,6 +75,7 @@ public class QuarryBlockEntity extends BlockEntity {
                     player.getInventory().add(item);
                     if (fluid != null) {
                         boolean added = blockEntity.addFluidToStorage(fluid);
+                        //right now this erases the fluid 
                     }
                 }
             }
@@ -120,6 +131,27 @@ public class QuarryBlockEntity extends BlockEntity {
                 FluidStack fluid = FluidStack.parseOptional(provider, fluidTag);
                 fluidStorage.add(fluid);
             }
+        }
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
+        return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(this.worldPosition));
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.literal("Quantum Quarry");
+    }
+
+    public int getMode() {
+        return this.getMode();
+    }
+
+    public void cycleMode() {
+        this.mode++;
+        if (this.mode > 2) {
+            this.mode = 0;
         }
     }
 }

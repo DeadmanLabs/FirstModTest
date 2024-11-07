@@ -26,6 +26,7 @@ import java.util.HashMap;
 import com.quantum.quantum_quarry.init.Menus;
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 import com.quantum.quantum_quarry.init.ModItems;
+import com.quantum.quantum_quarry.procedures.FindCore;
 
 public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<Integer, Slot>> {
     public final static HashMap<String, Object> guistate = new HashMap<>();
@@ -38,7 +39,7 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
     private boolean bound = false;
     private Supplier<Boolean> boundItemMatcher = null;
     private Entity boundEntity = null;
-    private BlockEntity boundBlockEntity = null;
+    private QuarryBlockEntity boundBlockEntity = null;
 
     /*
     public ScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
@@ -106,6 +107,12 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         this.x = pos.getX();
         this.y = pos.getY();
         this.z = pos.getZ();
+        BlockPos quarryPos = FindCore.execute(this.world, this.x, this.y, this.z);
+
+        if (quarryPos != null && this.world.getBlockEntity(quarryPos) instanceof QuarryBlockEntity quarryEntity) {
+            this.boundBlockEntity = quarryEntity;
+            this.bound = true;
+        }
 
         IItemHandler itemHandler = world.getCapability(Capabilities.ItemHandler.BLOCK, pos, null);
         if (itemHandler != null) {
@@ -141,11 +148,11 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         if (this.bound) {
             if (this.boundItemMatcher != null) {
                 return this.boundItemMatcher.get();
-            } else if (this.boundBlockEntity != null) {
-                return AbstractContainerMenu.stillValid(this.access, player, this.boundBlockEntity.getBlockState().getBlock());
             } else if (this.boundEntity != null) {
                 return this.boundEntity.isAlive();
-            }
+            } else if (this.boundBlockEntity != null) {
+                return AbstractContainerMenu.stillValid(this.access, player, this.boundBlockEntity.getBlockState().getBlock());
+            } 
         }
         return true;
     }

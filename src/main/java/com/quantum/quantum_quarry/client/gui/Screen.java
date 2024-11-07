@@ -6,24 +6,22 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.WidgetSprites;
 
 import java.util.HashMap;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
-import com.quantum.quantum_quarry.network.ButtonMessage;
+import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 
 public class Screen extends AbstractContainerScreen<ScreenMenu> {
     private final static HashMap<String, Object> guistate = ScreenMenu.guistate;
     private final Level world;
     private final int x, y, z;
     private final Player entity;
-    Button button_empty;
-    ImageButton RedstoneModeButton;
+    private final QuarryBlockEntity quarryEntity;
+    Button button_mode;
 
     public Screen(ScreenMenu container, Inventory inventory, Component text) {
         super(container, inventory, text);
@@ -34,6 +32,7 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         this.entity = container.entity;
         this.imageWidth = 176;
         this.imageHeight = 196;
+        this.quarryEntity = (QuarryBlockEntity)container.getBoundEntity();
     }
 
     private static final ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/quantum_miner_screen.png");
@@ -42,6 +41,17 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
+        switch (this.quarryEntity.getMode()) {
+            case 0:
+                guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstone_resize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                break;
+            case 1:
+                guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                break;
+            case 2:
+                guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                break;
+        }
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
@@ -53,9 +63,9 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         guiGraphics.blit(texture, this.leftPos, this.topPos, 0, 0, this.imageWidth, this.imageHeight, this.imageWidth, this.imageHeight);
         guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/biome_marker_blank.png"), this.leftPos + 6, this.topPos + 38, 0, 0, 16, 16, 16, 16);
         guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/enchanted_book_skeleton.png"), this.leftPos + 6, this.topPos + 18, 0, 0, 16, 16, 16, 16);
-        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 7, this.topPos + 79, 0, 0, 16, 16, 16, 16);
-        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 25, this.topPos + 80, 0, 0, 16, 16, 16, 16);
-        guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/energy_cell_level_0.png"), this.leftPos + 153, this.topPos + 81, 0, 0, 16, 16, 16, 16);
+        //guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 7, this.topPos + 79, 0, 0, 16, 16, 16, 16);
+        //guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 25, this.topPos + 80, 0, 0, 16, 16, 16, 16);
+        //guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/energy_cell_level_0.png"), this.leftPos + 153, this.topPos + 81, 0, 0, 16, 16, 16, 16);
         RenderSystem.disableBlend();
     }
 
@@ -87,19 +97,10 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     @Override
     public void init() {
         super.init();
-        button_empty = Button.builder(Component.translatable("gui.quantum_quarry.quantum_miner_screen.button_empty"), e -> {
-            if (true) {
-                QuantumQuarryMod.PACKET_HANDLER.sendToServer(new ButtonMessage(0, x, y, z));
-                ButtonMessage.handleButtonAction(entity, 0, x, y, z);
-            }
+        button_mode = Button.builder(Component.translatable("gui.quantum_quarry.quantum_miner_screen.button_empty"), e -> {
+            this.quarryEntity.cycleMode();
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
-        guistate.put("button:button_empty", button_empty);
-        this.addRenderableWidget(button_empty);
-        ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/atlas/imagebutton_redstone_resize.png");
-        WidgetSprites buttonSprites = new WidgetSprites(texture, texture);
-        RedstoneModeButton = new ImageButton(this.leftPos + 6, this.topPos + 59, 16, 16, null, e -> {
-
-        });
-        //imagebutton_redstone_resize = new ImageButton(this.leftPos + 6, this.topPos + 59, 16, 16, 0, 0, 16, )
+        guistate.put("button:button_mode", button_mode);
+        this.addRenderableWidget(button_mode);
     }
 }

@@ -16,35 +16,43 @@ import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.FriendlyByteBuf;
 
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 import com.quantum.quantum_quarry.init.BlockEntities;
+import com.quantum.quantum_quarry.procedures.FindCore;
 
-public class MinerBlock extends Block implements EntityBlock {
+import io.netty.buffer.Unpooled;
+
+public class MinerBlock extends Block {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
 
     public MinerBlock(BlockBehaviour.Properties properties) {
         super(properties);
     }
 
-    @Nullable
     @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        return new QuarryBlockEntity(pos, state);
-    }
-
-    @Nullable
-    @Override
-    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        return type == BlockEntities.QUARRY_BLOCK_ENTITY.get() ? (lvl, pos, st, be) -> QuarryBlockEntity.tick(lvl, pos, st, (QuarryBlockEntity)be) : null;
-    }
-
-    @Override
-    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (level.getBlockEntity(pos) instanceof QuarryBlockEntity blockEntity) {
-            if (placer instanceof ServerPlayer player) {
-                blockEntity.setOwner(player.getUUID());
+    public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+        if (!world.isClientSide) {
+            BlockPos quarry = FindCore.execute(world, pos.getX(), pos.getY(), pos.getZ());
+            if (quarry != null) {
+                boolean isQuarryValid = FindCore.validateStructure(world, quarry);
+                if (isQuarryValid) {
+                    BlockEntity blockEntity = world.getBlockEntity(quarry);
+                    
+                } else {
+                    if (!world.isClientSide() && world.getServer() != null) {
+                        player.displayClientMessage(Component.literal("The Machine is Incomplete!"), true);
+                    }
+                }
             }
         }
+        return InteractionResult.sidedSuccess(world.isClientSide);
     }
 }
