@@ -30,6 +30,14 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredItem;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
+import com.quantum.quantum_quarry.init.ModBlocks;
+import com.quantum.quantum_quarry.init.ModItems;
+import com.quantum.quantum_quarry.init.BlockEntities;
+import com.quantum.quantum_quarry.init.DataComponents;
+import com.quantum.quantum_quarry.init.Screens;
+import com.quantum.quantum_quarry.init.Menus;
+import com.quantum.quantum_quarry.init.Tabs;
+
 // The value here should match an entry in the META-INF/neoforge.mods.toml file
 @Mod(QuantumQuarry.MODID)
 public class QuantumQuarry
@@ -39,13 +47,13 @@ public class QuantumQuarry
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
     // Create a Deferred Register to hold Blocks which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(MODID);
+    public static final DeferredRegister.Blocks BLOCKS = ModBlocks.REGISTRY;
     // Create a Deferred Register to hold Items which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister.Items ITEMS = DeferredRegister.createItems(MODID);
+    public static final DeferredRegister.Items ITEMS = ModItems.REGISTRY;
     // Create a Deferred Register to hold CreativeModeTabs which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
+    public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = Tabs.REGISTRY;
     // Creates a Deferred Register to hold Block Entities which will all be registered under the "examplemod" namespace
-    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MODID);
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = BlockEntities.REGISTRY;
 
     public static final DeferredBlock<TickingBlock> TICKING_BLOCK = BLOCKS.register(
         "ticking_block",
@@ -85,6 +93,12 @@ public class QuantumQuarry
         CREATIVE_MODE_TABS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so block entities get registered
         BLOCK_ENTITY_TYPES.register(modEventBus);
+        // Register the Deferred Register to the mod event bus so data components get registered
+        DataComponents.REGISTRY.register(modEventBus);
+        // Register the Deferred Register to the mod event bus so screens get registered
+        // lol its missing
+        // Register the Deferred Register to the mod event bus so menus get registered
+        Menus.REGISTRY.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in.
         // Note that this is necessary if and only if we want *this* class (ExampleMod) to respond directly to events.

@@ -21,9 +21,11 @@ import com.quantum.quantum_quarry.client.gui.Screen;
 public class Screens {
     @SubscribeEvent
     public static void onRegisterMenuScreens(RegisterMenuScreensEvent event) {
+        /*
         event.register(
             Menus.QUANTUM_MINER_SCREEN.get(),
             Screen::new
         );
+        */
     }
 }

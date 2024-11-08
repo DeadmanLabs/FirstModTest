@@ -17,14 +17,18 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.stream.Collectors;
 
 import com.quantum.quantum_quarry.init.DataComponents;
 import com.quantum.quantum_quarry.init.ModItems;
+import com.quantum.quantum_quarry.packets.SyncVisitedBiomesPayload;
 
 public class SnowGlobeItem extends Item {
     private static final int REQUIRED_BIOMES = 7;
@@ -37,22 +41,7 @@ public class SnowGlobeItem extends Item {
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slot, boolean selected) {
         super.inventoryTick(stack, level, entity, slot, selected);
         if (!level.isClientSide && entity instanceof Player player) {
-            updateVisitedBiomes(stack, level, player);
-        }
-    }
-
-    private void updateVisitedBiomes(ItemStack stack, Level level, Player player) {
-        ResourceKey<Biome> currentBiome = level.getBiome(player.blockPosition()).unwrapKey().orElse(null);
-        if (currentBiome == null) return;
-
-        Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
-        if (visitedBiomes == null) {
-            visitedBiomes = new HashSet<>();
-        }
-
-        if (visitedBiomes.add(currentBiome)) {
-            stack.set(DataComponents.VISITED_BIOMES.get(), visitedBiomes);
-            player.displayClientMessage(Component.literal("Visited new biome: " + currentBiome.location()), true);
+            checkBiomeVisits(player, stack);
         }
     }
 
@@ -61,16 +50,17 @@ public class SnowGlobeItem extends Item {
         BlockPos pos = player.blockPosition();
         Biome biome = world.getBiome(pos).value();
         ResourceKey<Biome> biomeKey = world.registryAccess().registryOrThrow(Registries.BIOME).getResourceKey(biome).orElse(null);
+        Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
         if (biomeKey == null) {
             return;
         }
-        Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
-        if (visitedBiomes.isEmpty()) {
+        if (visitedBiomes == null || visitedBiomes.isEmpty()) {
             visitedBiomes = stack.set(DataComponents.VISITED_BIOMES.get(), new HashSet<>());
         }
-        if (!visitedBiomes.contains(biomeKey)) {
+        if (visitedBiomes != null && !visitedBiomes.contains(biomeKey)) {
             visitedBiomes.add(biomeKey);
             stack.set(DataComponents.VISITED_BIOMES.get(), visitedBiomes);
+            player.displayClientMessage(Component.literal("Visited new biome: " + biomeKey.location() + " / " + visitedBiomes.size()), true);
             if (visitedBiomes.size() >= REQUIRED_BIOMES) {
                 ItemStack magicSnowGlobe = new ItemStack(ModItems.MAGIC_SNOW_GLOBE.get());
                 player.getInventory().removeItem(stack);
@@ -79,17 +69,50 @@ public class SnowGlobeItem extends Item {
         }
     }
 
+    private void checkBiomeVisits(ServerPlayer player, ItemStack stack) {
+        Level world = player.level();
+        BlockPos pos = player.blockPosition();
+        Biome biome = world.getBiome(pos).value();
+        ResourceKey<Biome> biomeKey = world.registryAccess().registryOrThrow(Registries.BIOME).getResourceKey(biome).orElse(null);
+        if (biomeKey == null) {
+            return;
+        }
+        Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
+        if (visitedBiomes == null) {
+            visitedBiomes = new HashSet<>();
+        }
+        if (visitedBiomes != null && !visitedBiomes.contains(biomeKey)) {
+
+            stack.set(DataComponents.VISITED_BIOMES.get(), visitedBiomes);
+            player.displayClientMessage(Component.literal("Visited new biome: " + biomeKey.location() + " / " + visitedBiomes.size()), true);
+            if (visitedBiomes.size() >= REQUIRED_BIOMES) {
+                ItemStack magicSnowGlobe = new ItemStack(ModItems.MAGIC_SNOW_GLOBE.get());
+                player.getInventory().removeItem(stack);
+                player.getInventory().add(magicSnowGlobe);
+            }
+            sendSyncPacket(player, visitedBiomes);
+        }
+    }
+
+    private void sendSyncPacket(ServerPlayer player, Set<ResourceKey<Biome>> visitedBiomes) {
+        Set<ResourceLocation> biomeLocations = visitedBiomes.stream()
+            .map(ResourceKey::location)
+            .collect(Collectors.toSet());
+        SyncVisitedBiomesPayload payload = new SyncVisitedBiomesPayload(biomeLocations);
+        player.connection.send(new ClientboundCustomPayloadPacket(payload));
+    }
+
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
         Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
-        if (visitedBiomes != null && !visitedBiomes.isEmpty()) {
-            tooltip.add(Component.literal("Visited Biomes:"));
+        if (visitedBiomes != null) {
+            tooltip.add(Component.literal("Visited Biomes (" + visitedBiomes.size() + "):"));
             for (ResourceKey<Biome> biome : visitedBiomes) {
                 tooltip.add(Component.literal("- " + biome.location()));
             }
         } else {
-            tooltip.add(Component.literal("No biomes visited yet."));
+            tooltip.add(Component.literal("No biomes visited yet. (" + visitedBiomes + ")"));
         }
     }
 }
