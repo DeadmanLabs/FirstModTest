@@ -1,8 +1,19 @@
 package com.quantum.quantum_quarry.procedures;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.Level;
+
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.BlockCapability;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.quantum.quantum_quarry.init.ModBlocks;
 
@@ -47,5 +58,81 @@ public class FindCore {
             valid = valid && (world.getBlockState(sidePos).getBlock() == ModBlocks.MINER.get());
         }
         return valid;
+    }
+
+    public static BlockPos[] findStorage(Level world, BlockPos pos) {
+        BlockPos[] positions = {
+            BlockPos.containing(pos.getX() + 1 + 1, pos.getY(), pos.getZ()), // ignore - 1 on the X cause that is the quarry face
+            BlockPos.containing(pos.getX() + 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX() + 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX() - 1 - 1, pos.getY(), pos.getZ()), // ignore + 1 on the X cause that is the quarry face
+            BlockPos.containing(pos.getX() - 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX(), pos.getY() + 1 + 1, pos.getZ()), // ignore - 1 on the Y cause that is the quarry face
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX(), pos.getY() - 1 - 1, pos.getZ()), // ignore + 1 on the Y cause that is the quarry face
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY(), pos.getZ() + 1 + 1), // ignore - 1 on the Z cause that is the quarry face
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX(), pos.getY(), pos.getZ() - 1 - 1), // ignore + 1 on the Z cause that is the quarry face
+        };
+        return Arrays.asList(positions).stream().filter(face -> {
+            return world.getCapability(Capabilities.ItemHandler.BLOCK, face, Direction.UP) != null;
+        }).collect(Collectors.toList()).toArray(new BlockPos[0]);
+    }
+
+    public static BlockPos[] findFluidStorage(Level world, BlockPos pos) {
+        BlockPos[] positions = {
+            BlockPos.containing(pos.getX() + 1 + 1, pos.getY(), pos.getZ()), // ignore - 1 on the X cause that is the quarry face
+            BlockPos.containing(pos.getX() + 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX() + 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX() - 1 - 1, pos.getY(), pos.getZ()), // ignore + 1 on the X cause that is the quarry face
+            BlockPos.containing(pos.getX() - 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY() + 1, pos.getZ()),
+            BlockPos.containing(pos.getX(), pos.getY() + 1 + 1, pos.getZ()), // ignore - 1 on the Y cause that is the quarry face
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX() - 1, pos.getY() - 1, pos.getZ()),
+            BlockPos.containing(pos.getX(), pos.getY() - 1 - 1, pos.getZ()), // ignore + 1 on the Y cause that is the quarry face
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() + 1),
+            BlockPos.containing(pos.getX(), pos.getY(), pos.getZ() + 1 + 1), // ignore - 1 on the Z cause that is the quarry face
+            BlockPos.containing(pos.getX() + 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX() - 1, pos.getY(), pos.getZ() - 1),
+            BlockPos.containing(pos.getX(), pos.getY() + 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX(), pos.getY() - 1, pos.getZ() - 1),
+            BlockPos.containing(pos.getX(), pos.getY(), pos.getZ() - 1 - 1), // ignore + 1 on the Z cause that is the quarry face
+        };
+        return Arrays.asList(positions).stream().filter(face -> {
+            return world.getCapability(Capabilities.FluidHandler.BLOCK, face, Direction.UP) != null;
+        }).collect(Collectors.toList()).toArray(new BlockPos[0]);
     }
 }

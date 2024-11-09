@@ -32,6 +32,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import com.quantum.quantum_quarry.helpers.ChunkMiner;
 import com.quantum.quantum_quarry.init.BlockEntities;
 import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
+import com.quantum.quantum_quarry.procedures.FindCore;
 
 import io.netty.buffer.Unpooled;
 
@@ -68,14 +69,16 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
                 if (blockEntity.manager.itemsToGive.size() <= 0) {
                     blockEntity.manager.startMining();
                 }
-                ItemStack item = blockEntity.manager.itemsToGive.poll();
-                FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
-                if (item != null && blockEntity.energyStorage.extractEnergy(1, true) == 1) {
-                    blockEntity.energyStorage.extractEnergy(1, false);
-                    player.getInventory().add(item);
-                    if (fluid != null) {
-                        boolean added = blockEntity.addFluidToStorage(fluid);
-                        //right now this erases the fluid 
+                if (FindCore.validateStructure(level, pos)) { //We can generate the chunk without having a valid structure to save ticks
+                    ItemStack item = blockEntity.manager.itemsToGive.poll();
+                    FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
+                    if (item != null /* && blockEntity.energyStorage.extractEnergy(1, true) == 1 */) {
+                        //blockEntity.energyStorage.extractEnergy(1, false);
+                        player.getInventory().add(item);
+                        if (fluid != null) {
+                            boolean added = blockEntity.addFluidToStorage(fluid);
+                            //right now this erases the fluid 
+                        }
                     }
                 }
             }
@@ -105,15 +108,17 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
     @Override
     protected void saveAdditional(CompoundTag tag, Provider provider) {
         super.saveAdditional(tag, provider);
-        tag.put("Energy", energyStorage.serializeNBT(provider));
-        tag.putUUID("Owner", this.owner);
-        ListTag fluidList = new ListTag();
-        for (FluidStack fluid : fluidStorage) {
-            CompoundTag fluidTag = new CompoundTag();
-            fluid.save(provider, fluidTag);
-            fluidList.add(fluidTag);
+        if (this.owner != null) {
+            tag.put("Energy", energyStorage.serializeNBT(provider));
+            tag.putUUID("Owner", this.owner);
+            ListTag fluidList = new ListTag();
+            for (FluidStack fluid : fluidStorage) {
+                CompoundTag fluidTag = new CompoundTag();
+                fluid.save(provider, fluidTag);
+                fluidList.add(fluidTag);
+            }
+            tag.put("Fluids", fluidList);
         }
-        tag.put("Fluids", fluidList);
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.quantum.quantum_quarry.block;
 import javax.annotation.Nullable;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -13,9 +14,13 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
@@ -28,13 +33,20 @@ import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 import com.quantum.quantum_quarry.init.BlockEntities;
 import com.quantum.quantum_quarry.procedures.FindCore;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.netty.buffer.Unpooled;
 
 public class MinerBlock extends Block {
-    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final Logger LOGGER = LoggerFactory.getLogger(MinerBlock.class);
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    //public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
 
     public MinerBlock(BlockBehaviour.Properties properties) {
         super(properties);
+        //this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
+        this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.UP));
     }
 
     @Override
@@ -45,14 +57,30 @@ public class MinerBlock extends Block {
                 boolean isQuarryValid = FindCore.validateStructure(world, quarry);
                 if (isQuarryValid) {
                     BlockEntity blockEntity = world.getBlockEntity(quarry);
-                    
+                    // Open the interface
+                    LOGGER.info("Machine is functional!");
                 } else {
                     if (!world.isClientSide() && world.getServer() != null) {
                         player.displayClientMessage(Component.literal("The Machine is Incomplete!"), true);
+                    } else {
+                        LOGGER.warn("Machine isnt valid but we aren't client side!");
                     }
                 }
+            } else {
+                LOGGER.warn("We cant find a quarry!");
             }
         }
         return InteractionResult.sidedSuccess(world.isClientSide);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+        //builder.add(AXIS);
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getClickedFace());
     }
 }

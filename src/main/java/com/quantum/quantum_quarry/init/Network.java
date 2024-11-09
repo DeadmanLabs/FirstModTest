@@ -14,13 +14,7 @@ public class Network {
             SyncVisitedBiomesPayload.TYPE,
             SyncVisitedBiomesPayload.STREAM_CODEC, 
             (payload, context) -> {
-                Player player = context.player();
-                if (player != null) {
-                    ItemStack stack = player.getMainHandItem();
-                    if (stack.getItem() instanceof SnowGlobeItem) {
-                        
-                    }
-                }
+                
             });
     }
 }
