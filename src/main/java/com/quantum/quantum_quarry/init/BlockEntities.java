@@ -7,8 +7,8 @@ import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
-import com.quantum.quantum_quarry.QuantumQuarry;
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
+import com.quantum.quantum_quarry.QuantumQuarry;
 
 public class BlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> REGISTRY = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, QuantumQuarry.MODID);

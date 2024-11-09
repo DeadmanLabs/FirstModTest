@@ -164,6 +164,26 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
+/* Added */
+def modsDir = file('mods')
+
+if (!modsDir.exists()) {
+    modsDir.mkdirs()
+}
+
+sourceSets {
+    main {
+        runtimeClasspath += files(modsDir)
+    }
+}
+
+tasks.withType(JavaExec) {
+    doFirst {
+        classpath += files(modsDir.listFiles())
+    }
+}
+/* end added */
+
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.
 idea {
     module {
