@@ -5,11 +5,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.item.ItemStack;
 
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.BlockCapability;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.Arrays;
 import java.util.List;
@@ -134,5 +137,33 @@ public class FindCore {
         return Arrays.asList(positions).stream().filter(face -> {
             return world.getCapability(Capabilities.FluidHandler.BLOCK, face, Direction.UP) != null;
         }).collect(Collectors.toList()).toArray(new BlockPos[0]);
+    }
+
+    public static boolean insertItem(Level world, BlockPos pos, ItemStack stack) {
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (blockEntity != null) {
+            IItemHandler itemHandler = world.getCapability(Capabilities.ItemHandler.BLOCK, pos, Direction.UP);
+            if (itemHandler != null) {
+                for (int slot = 0; slot < itemHandler.getSlots(); slot++) {
+                    ItemStack remainingStack = itemHandler.insertItem(slot, stack, false);
+                    if (remainingStack.isEmpty()) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public static int insertFluid(Level world, BlockPos pos, FluidStack stack) {
+        BlockEntity blockEntity = world.getBlockEntity(pos);
+        if (blockEntity != null) {
+            IFluidHandler fluidHandler = world.getCapability(Capabilities.FluidHandler.BLOCK, pos, Direction.UP);
+            if (fluidHandler != null) {
+                int filledAmount = fluidHandler.fill(stack, IFluidHandler.FluidAction.EXECUTE);
+                return filledAmount;
+            }
+        }
+        return 0;
     }
 }

@@ -69,18 +69,26 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
                 if (blockEntity.manager.itemsToGive.size() <= 0) {
                     blockEntity.manager.startMining();
                 }
-                if (FindCore.validateStructure(level, pos)) { //We can generate the chunk without having a valid structure to save ticks
+                BlockPos core = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ()); //ensure that we are using the core for validation
+                if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
                     ItemStack item = blockEntity.manager.itemsToGive.poll();
                     FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
                     if (item != null /* && blockEntity.energyStorage.extractEnergy(1, true) == 1 */) {
                         //blockEntity.energyStorage.extractEnergy(1, false);
+                        BlockPos[] storages = FindCore.findStorage(level, core);
                         player.getInventory().add(item);
                         if (fluid != null) {
                             boolean added = blockEntity.addFluidToStorage(fluid);
                             //right now this erases the fluid 
                         }
+                    } else {
+                        //LOGGER.info("stack is empty!");
                     }
+                } else {
+                    //LOGGER.info("Miner structure is not valid!");
                 }
+            } else {
+                //LOGGER.warn("Owner is null!");
             }
         }
     }
