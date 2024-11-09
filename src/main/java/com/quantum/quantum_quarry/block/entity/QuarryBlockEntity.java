@@ -81,10 +81,14 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
                                 break;
                             }
                         }
-                        //player.getInventory().add(item);
                         if (fluid != null) {
-                            boolean added = blockEntity.addFluidToStorage(fluid);
-                            //right now this erases the fluid 
+                            BlockPos[] tanks = FindCore.findFluidStorage(level, core);
+                            for (BlockPos tank : tanks) {
+                                if (FindCore.insertFluid(level, tank, fluid) == 0) {
+                                    break;
+                                }
+                                //If we failed to insert all the fluid, too bad!
+                            }
                         }
                     } else {
                         //LOGGER.info("stack is empty!");

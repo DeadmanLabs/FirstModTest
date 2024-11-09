@@ -9,10 +9,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -22,8 +29,13 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.resources.ResourceKey;
 
 import net.neoforged.neoforge.fluids.FluidStack;
+
+import java.util.Optional;
 
 public class ChunkMiner {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkMiner.class);
@@ -71,7 +83,7 @@ public class ChunkMiner {
         LOGGER.info("Unloaded chunk at position: {}", chunk.getPos());
     }
 
-    private void simulateMining(LevelChunk chunk, boolean silkTouch = false, int fortune = 0) {
+    private void simulateMining(LevelChunk chunk, int fortune) {
         for (BlockPos pos : BlockPos.betweenClosed(chunk.getPos().getMinBlockX(), level.getMinBuildHeight(), chunk.getPos().getMinBlockZ(), chunk.getPos().getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getPos().getMaxBlockZ())) {
             BlockState state = chunk.getBlockState(pos);
             Block block = state.getBlock();
@@ -83,42 +95,69 @@ public class ChunkMiner {
                 }
                 else {
                     BlockEntity blockEntity = chunk.getBlockEntity(pos);
-                    if (silkTouch) {
-                        LootContext.Builder builder = new LootContext.Builder((ServerLevel)level)
-                            .withRandom(level.random)
-                            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
-                            .withParameter(LootContextParams.TOOL, getSilkTool())
-                            .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity);
-                            List<ItemStack> drops = state.getDrops(builder);
-                            itemsToGive.addAll(drops);
-                    } else {
                         if (fortune > 0) {
-                            LootContext.Builder builder = new LootContext.Builder((ServerLevel)level)
-                                .withRandom(level.random)
-                                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
-                                .withParameter(LootContextParams.TOOL, getFortuneTool(fortune))
-                                .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity);
-                            List<ItemStack> drops = state.getDrops(builder);
-                            itemsToGive.addAll(drops);
-                        } else {
-                            List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity);
+                            List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity, null, getFortuneTool(level, fortune));
                             itemsToGive.addAll(drops);
                         }
-                    }
                 }
             }
         }
     }
 
-    private ItemStack getFortuneTool(int fortuneLevel) {
+    private void simulateSilktouchMining(LevelChunk chunk) {
+        for (BlockPos pos : BlockPos.betweenClosed(chunk.getPos().getMinBlockX(), level.getMinBuildHeight(), chunk.getPos().getMinBlockZ(), chunk.getPos().getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getPos().getMaxBlockZ())) {
+            BlockState state = chunk.getBlockState(pos);
+            Block block = state.getBlock();
+            if (block != Blocks.AIR) {
+                FluidState fluidState = state.getFluidState();
+                if (!fluidState.isEmpty() && fluidState.isSource()) {
+                    FluidStack fluidStack = new FluidStack(fluidState.getType(), 1000);
+                    fluidsToGive.add(fluidStack);
+                }
+                else {
+                    BlockEntity blockEntity = chunk.getBlockEntity(pos);
+                    List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity, null, getSilkTool(level));
+                    itemsToGive.addAll(drops);
+                }
+            }
+        }
+    }
+
+    private void simulateMining(LevelChunk chunk) {
+        for (BlockPos pos : BlockPos.betweenClosed(chunk.getPos().getMinBlockX(), level.getMinBuildHeight(), chunk.getPos().getMinBlockZ(), chunk.getPos().getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getPos().getMaxBlockZ())) {
+            BlockState state = chunk.getBlockState(pos);
+            Block block = state.getBlock();
+            if (block != Blocks.AIR) {
+                FluidState fluidState = state.getFluidState();
+                if (!fluidState.isEmpty() && fluidState.isSource()) {
+                    FluidStack fluidStack = new FluidStack(fluidState.getType(), 1000);
+                    fluidsToGive.add(fluidStack);
+                }
+                else {
+                    BlockEntity blockEntity = chunk.getBlockEntity(pos);
+                    List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity);
+                    itemsToGive.addAll(drops);
+                }
+            }
+        }
+    }
+
+    private ItemStack getFortuneTool(ServerLevel level, int fortuneLevel) {
+        
         ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE);
-        tool.enchant(Enchantments.BLOCK_FORTUNE, fortuneLevel);
+        ResourceKey<Enchantment> fortuneKey = Enchantments.FORTUNE;
+        Registry<Enchantment> enchantmentRegistry = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+        Optional<Holder.Reference<Enchantment>> fortuneHolder = enchantmentRegistry.getHolder(fortuneKey);
+        fortuneHolder.ifPresent(holder -> tool.enchant(holder, fortuneLevel));
         return tool;
     }
 
-    private ItemStack getSilkTool() {
+    private ItemStack getSilkTool(ServerLevel level) {
         ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE);
-        tool.enchant(Enchantments.SILK_TOUCH, 1);
+        ResourceKey<Enchantment> silktouchKey = Enchantments.SILK_TOUCH;
+        Registry<Enchantment> enchantmentRegistry = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
+        Optional<Holder.Reference<Enchantment>> silktouchHolder = enchantmentRegistry.getHolder(silktouchKey);
+        silktouchHolder.ifPresent(holder -> tool.enchant(holder, 1));
         return tool;
     }
 }
