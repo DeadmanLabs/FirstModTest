@@ -71,7 +71,7 @@ public class ChunkMiner {
         LOGGER.info("Unloaded chunk at position: {}", chunk.getPos());
     }
 
-    private void simulateMining(LevelChunk chunk) {
+    private void simulateMining(LevelChunk chunk, boolean silkTouch = false, int fortune = 0) {
         for (BlockPos pos : BlockPos.betweenClosed(chunk.getPos().getMinBlockX(), level.getMinBuildHeight(), chunk.getPos().getMinBlockZ(), chunk.getPos().getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getPos().getMaxBlockZ())) {
             BlockState state = chunk.getBlockState(pos);
             Block block = state.getBlock();
@@ -83,10 +83,42 @@ public class ChunkMiner {
                 }
                 else {
                     BlockEntity blockEntity = chunk.getBlockEntity(pos);
-                    List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity);
-                    itemsToGive.addAll(drops);
+                    if (silkTouch) {
+                        LootContext.Builder builder = new LootContext.Builder((ServerLevel)level)
+                            .withRandom(level.random)
+                            .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                            .withParameter(LootContextParams.TOOL, getSilkTool())
+                            .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity);
+                            List<ItemStack> drops = state.getDrops(builder);
+                            itemsToGive.addAll(drops);
+                    } else {
+                        if (fortune > 0) {
+                            LootContext.Builder builder = new LootContext.Builder((ServerLevel)level)
+                                .withRandom(level.random)
+                                .withParameter(LootContextParams.ORIGIN, Vec3.atCenterOf(pos))
+                                .withParameter(LootContextParams.TOOL, getFortuneTool(fortune))
+                                .withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity);
+                            List<ItemStack> drops = state.getDrops(builder);
+                            itemsToGive.addAll(drops);
+                        } else {
+                            List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity);
+                            itemsToGive.addAll(drops);
+                        }
+                    }
                 }
             }
         }
+    }
+
+    private ItemStack getFortuneTool(int fortuneLevel) {
+        ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE);
+        tool.enchant(Enchantments.BLOCK_FORTUNE, fortuneLevel);
+        return tool;
+    }
+
+    private ItemStack getSilkTool() {
+        ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE);
+        tool.enchant(Enchantments.SILK_TOUCH, 1);
+        return tool;
     }
 }
