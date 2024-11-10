@@ -24,6 +24,13 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.biome.MultiNoiseBiomeSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.server.level.WorldGenRegion;
+import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.levelgen.GenerationStep;
+import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
 import java.lang.reflect.Field;
 import java.util.concurrent.Executor;
@@ -31,6 +38,7 @@ import java.util.concurrent.Executor;
 import com.quantum.quantum_quarry.helpers.WorldGen.SingleBiomeProvider;
 
 public class TemporaryWorldUtil {
+    /*
     public static ProtoChunk createVoidChunk(ServerLevel level, Holder<Biome> biome, ResourceKey<DimensionType> dimension, int chunkX, int chunkZ) {
         RegistryAccess registryAccess = level.registryAccess();
         Registry<Biome> biomeRegistry = registryAccess.registryOrThrow(Registries.BIOME);
@@ -100,4 +108,5 @@ public class TemporaryWorldUtil {
         );
         return protoChunk;
     }
+    */
 }

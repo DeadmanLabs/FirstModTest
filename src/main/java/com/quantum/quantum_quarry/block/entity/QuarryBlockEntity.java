@@ -80,6 +80,7 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
                             if (FindCore.insertItem(level, storage, item)) {
                                 break;
                             }
+                            //So keep going if the queue still contains items, but dont stop even if the storages are full.
                         }
                         if (fluid != null) {
                             BlockPos[] tanks = FindCore.findFluidStorage(level, core);
