@@ -142,4 +142,32 @@ public class TemporaryWorldUtil {
         );
         return new WorldGenRegion(level, chunkCache, chunkStep, chunk);
     }
+
+    public static ResourceKey<DimensionType> getDimensionFromBiome(RegistryAccess registryAccess, Holder<Biome> biome) {
+        List<Holder<Biome>> overworldBiomes = getDimensionBiomes(registryAccess, BuiltinDimensionTypes.OVERWORLD);
+        List<Holder<Biome>> netherBiomes = getDimensionBiomes(registryAccess, BuiltinDimensionTypes.NETHER);
+        List<Holder<Biome>> endBiomes = getDimensionBiomes(registryAccess, BuiltinDimensionTypes.END);
+        if (overworldBiomes.contains(biome)) {
+            return BuiltinDimensionTypes.OVERWORLD;
+        } else if (netherBiomes.contains(biome)) {
+            return BuiltinDimensionTypes.NETHER;
+        } else if (endBiomes.contains(biome)) {
+            return BuiltinDimensionTypes.END;
+        } else {
+            return null;
+        }
+    }
+
+    public static List<Holder<Biome>> getDimensionBiomes(RegistryAccess registryAccess, ResourceKey<DimensionType> dimension) {
+        Registry<Biome> biomeRegistry = registryAccess.registryOrThrow(Registries.BIOME);
+        return biomeRegistry.holders().stream()
+            .filter(biomeHolder -> {
+                ResourceLocation biomeLocation = biomeHolder.unwrapKey().map(ResourceKey::location).orElse(null);
+                if (biomeLocation == null) {
+                    return false;
+                }
+                return biomeLocation.getNamespace().equals(dimension.location().getNamespace());
+            })
+            .collect(Collectors.toList());
+    }
 }
