@@ -24,7 +24,7 @@
         }
     },
     "result": {
-        "item": "quantum_quarry:miner",
+        "id": "quantum_quarry:miner",
         "count": 1
     }
 }

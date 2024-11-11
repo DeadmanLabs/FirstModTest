@@ -49,7 +49,8 @@ public class ChunkMiner {
     public final Queue<ItemStack> itemsToGive = new LinkedList<>();
     public final Queue<FluidStack> fluidsToGive = new LinkedList<>();
     public Holder<Biome> currentBiome = null;
-    public ResourceKey<DimensionType> dimension = null;
+    public DimensionType dimension = null;
+    private ChunkPos currentPos = null;
 
     public ChunkMiner(ServerLevel level) {
         this.level = level;
@@ -57,33 +58,43 @@ public class ChunkMiner {
 
     public void startMining() {
         ChunkPos randomPos = getRandomChunkPos();
-        LevelChunk chunk = loadChunk(randomPos);
+        LevelChunk chunk = loadChunk(randomPos, null);
         if (chunk != null) {
             simulateMining(chunk);
+            /*
+            while (this.itemsToGive.size() <= 0) {
+                ChunkPos randomSecond = getRandomChunkPos();
+                LOGGER.info("Loaded chunk at position: {} in dimension {} was empty, retrying...", randomSecond, chunk.getLevel().dimension());
+                chunk = loadChunk(randomSecond, chunk.getLevel().dimension());
+            }
+            */
             unloadChunk(chunk);
         }
     }
 
     private ChunkPos getRandomChunkPos() {
         Random random = new Random();
-        int x = random.nextInt(1000000) - 500000;
-        int z = random.nextInt(1000000) - 500000;
+        int x = random.nextInt(1875000 - (-1875000) + 1) + (-1875000);
+        int z = random.nextInt(1875000 - (-1875000) + 1) + (-1875000);
         return new ChunkPos(x, z);
     }
 
-    private LevelChunk loadChunk(ChunkPos pos) {
-        ResourceKey<Level> dimensionKey = getRandomDimension();
-        ServerLevel targetLevel = level.getServer().getLevel(dimensionKey);
+    private LevelChunk loadChunk(ChunkPos pos, ResourceKey<Level> dimension) {
+        if (dimension == null) {
+            dimension = getRandomDimension();
+        }
+        ServerLevel targetLevel = level.getServer().getLevel(dimension);
         if (targetLevel == null) {
-            LOGGER.warn("Dimension {} not found!", dimensionKey.location());
+            LOGGER.warn("Dimension {} not found!", dimension.location());
             return null;
         }
         ServerChunkCache chunkCache = targetLevel.getChunkSource();
         chunkCache.addRegionTicket(TicketType.UNKNOWN, pos, 0, pos);
         ChunkAccess chunkAccess = chunkCache.getChunk(pos.x, pos.z, ChunkStatus.FULL, true);
         if (chunkAccess instanceof LevelChunk) {
-            LOGGER.info("Loaded chunk at position: {} in dimension: {}", pos, dimensionKey);
-            this.dimension = dimensionKey;
+            LOGGER.info("Loaded chunk at position: {} in dimension: {}", pos, dimension);
+            this.currentPos = pos;
+            this.dimension = targetLevel.dimensionType();
             this.currentBiome = null;
             return (LevelChunk)chunkAccess;
         } else {
@@ -96,6 +107,7 @@ public class ChunkMiner {
         Level targetLevel = chunk.getLevel();
         ServerChunkCache chunkCache = level.getChunkSource();
         chunkCache.removeRegionTicket(TicketType.UNKNOWN, chunk.getPos(), 0, chunk.getPos());
+        this.currentPos = null;
         LOGGER.info("Unloaded chunk at position: {} in dimension: {}", chunk.getPos(), targetLevel.dimension().location());
     }
 
@@ -189,7 +201,7 @@ public class ChunkMiner {
 
     public static Holder<Biome> getBiomeOfChunk(ServerLevel level, ChunkPos pos) {
         // Estimated
-        LevelChunk chunk = serverLevel.getChunk(pos);
-        return chunk.getNoiseBiome(pos);
+        LevelChunk chunk = level.getChunk(pos.x, pos.z);
+        return chunk.getNoiseBiome(((pos.x << 4) + 8) >> 2, 0, ((pos.z << 4) + 8) >> 2);
     }
 }

@@ -3,22 +3,25 @@
     "category": "misc",
     "pattern": [
         "aba",
-        "bcb",
+        "cdc",
         "aba"
     ],
     "key": {
         "a": {
-            "item": "minecraft:end_stone"
+            "tag": "c:dyes"
         },
         "b": {
-            "item": "minecraft:obsidian"
+            "item": "minecraft:iron_ingot"
         },
         "c": {
-            "item": "quantum_quarry:magic_snow_globe"
+            "item": "minecraft:gold_ingot"
+        },
+        "d": {
+            "tag": "minecraft:saplings"
         }
     },
     "result": {
-        "item": "quantum_quarry:quarry",
+        "id": "quantum_quarry:biome_marker",
         "count": 1
     }
 }

@@ -69,8 +69,6 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
             if (player != null) {
                 if (blockEntity.manager.itemsToGive.size() <= 0) {
                     blockEntity.manager.startMining();
-                } else {
-                    LOGGER.info("Chunk already exists!");
                 }
                 BlockPos core = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ()); //ensure that we are using the core for validation
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks

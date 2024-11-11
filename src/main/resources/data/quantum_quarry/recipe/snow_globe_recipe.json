@@ -4,23 +4,23 @@
     "pattern": [
         "abc",
         "def",
-        "gh"
+        "gh "
     ],
     "key": {
         "a": {
             "item": "minecraft:glass"
         },
         "b": {
-            "item": "minecraft:saplings"
+            "tag": "minecraft:saplings"
         },
         "c": {
             "item": "minecraft:snowball"
         },
         "d": {
-            "item": "minecraft:oak_door"
+            "tag": "minecraft:wooden_doors"
         },
         "e": {
-            "item": "minecraft:logs"
+            "tag": "minecraft:logs"
         },
         "f": {
             "item": "minecraft:grass_block"
@@ -33,7 +33,7 @@
         }
     },
     "result": {
-        "item": "quantum_quarry:snow_globe",
+        "id": "quantum_quarry:snow_globe",
         "count": 1
     }
 }
