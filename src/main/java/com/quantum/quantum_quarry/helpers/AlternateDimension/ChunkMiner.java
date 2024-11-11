@@ -83,6 +83,8 @@ public class ChunkMiner {
         ChunkAccess chunkAccess = chunkCache.getChunk(pos.x, pos.z, ChunkStatus.FULL, true);
         if (chunkAccess instanceof LevelChunk) {
             LOGGER.info("Loaded chunk at position: {} in dimension: {}", pos, dimensionKey);
+            this.dimension = dimensionKey;
+            this.currentBiome = null;
             return (LevelChunk)chunkAccess;
         } else {
             LOGGER.warn("Failed to cast LevelChunk to chunkAccess!");
@@ -183,5 +185,11 @@ public class ChunkMiner {
         );
         Random random = new Random();
         return dimensions.get(random.nextInt(dimensions.size()));
+    }
+
+    public static Holder<Biome> getBiomeOfChunk(ServerLevel level, ChunkPos pos) {
+        // Estimated
+        LevelChunk chunk = serverLevel.getChunk(pos);
+        return chunk.getNoiseBiome(pos);
     }
 }

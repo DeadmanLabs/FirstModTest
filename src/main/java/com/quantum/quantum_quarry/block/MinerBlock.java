@@ -41,12 +41,14 @@ import io.netty.buffer.Unpooled;
 public class MinerBlock extends Block {
     public static final Logger LOGGER = LoggerFactory.getLogger(MinerBlock.class);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final BooleanProperty POWERED = BooleanProperty.create("powered");
     //public static final EnumProperty<Direction.Axis> AXIS = BlockStateProperties.AXIS;
 
     public MinerBlock(BlockBehaviour.Properties properties) {
         super(properties);
         //this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.UP));
+        this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, false));
     }
 
     @Override
@@ -76,11 +78,21 @@ public class MinerBlock extends Block {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+        builder.add(POWERED);
         //builder.add(AXIS);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         return this.defaultBlockState().setValue(FACING, context.getClickedFace());
+    }
+
+    @Override
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        boolean isPowered = level.hasNeighborSignal(pos);
+        if (isPowered != state.getValue(POWERED)) {
+            level.setBlock(pos, state.setValue(POWERED, isPowered), 3);
+            
+        }
     }
 }

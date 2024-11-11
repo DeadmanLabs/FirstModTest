@@ -3,10 +3,9 @@
     "generator": {
       "type": "minecraft:noise",
       "seed": null,
-      "settings": "minecraft:end",
+      "settings": "minecraft:floating_islands",
       "biome_source": {
-        "type": "minecraft:multi_noise",
-        "preset": "minecraft:the_end"
+        "type": "minecraft:the_end"
       }
     }
 }
