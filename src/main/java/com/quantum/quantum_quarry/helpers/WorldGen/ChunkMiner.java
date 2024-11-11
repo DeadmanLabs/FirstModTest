@@ -23,12 +23,18 @@ import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.LinkedList;
 import java.util.Queue;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Optional;
 import java.util.List;
 
+import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 import com.quantum.quantum_quarry.helpers.WorldGen.TemporaryWorldUtil;
 
 public class ChunkMiner {
+    private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);
     private final ServerLevel level;
     private final Holder<Biome> biome;
     public final Queue<ItemStack> itemsToGive = new LinkedList<>();
@@ -40,9 +46,15 @@ public class ChunkMiner {
     }
 
     public void startMining() {
+        LOGGER.info("Generating chunk...");
         ProtoChunk chunk = TemporaryWorldUtil.createVoidChunk(this.level, biome);
+        LOGGER.info("Chunk Generated!");
         if (chunk != null) {
+            LOGGER.info("Mining Chunk...");
             simulateMining(chunk);
+            LOGGER.info("Mined Chunk!");
+        } else {
+            LOGGER.info("Failed to generate chunk!");
         }
     }
 

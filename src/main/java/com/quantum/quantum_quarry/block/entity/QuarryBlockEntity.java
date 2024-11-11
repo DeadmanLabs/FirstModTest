@@ -29,7 +29,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 
-import com.quantum.quantum_quarry.helpers.ChunkMiner;
+//import com.quantum.quantum_quarry.helpers.ChunkMiner;
+import com.quantum.quantum_quarry.helpers.AlternateDimension.ChunkMiner;
 import com.quantum.quantum_quarry.init.BlockEntities;
 import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
 import com.quantum.quantum_quarry.procedures.FindCore;
@@ -56,7 +57,7 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
     public void setOwner(UUID uuid) {
         this.owner = uuid;
         if (this.level instanceof ServerLevel serverLevel) {
-            this.manager = new ChunkMiner(serverLevel);
+            this.manager = new ChunkMiner(serverLevel); //null biome = all
         } else {
             LOGGER.info("Set owner but could not get instance of ServerLevel");
         }
@@ -68,6 +69,8 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
             if (player != null) {
                 if (blockEntity.manager.itemsToGive.size() <= 0) {
                     blockEntity.manager.startMining();
+                } else {
+                    LOGGER.info("Chunk already exists!");
                 }
                 BlockPos core = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ()); //ensure that we are using the core for validation
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
@@ -92,13 +95,13 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
                             }
                         }
                     } else {
-                        //LOGGER.info("stack is empty!");
+                        LOGGER.info("stack is empty!");
                     }
                 } else {
-                    //LOGGER.info("Miner structure is not valid!");
+                    LOGGER.info("Miner structure is not valid!");
                 }
             } else {
-                //LOGGER.warn("Owner is null!");
+                LOGGER.warn("Owner is null!");
             }
         }
     }

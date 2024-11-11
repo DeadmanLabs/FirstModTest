@@ -34,8 +34,11 @@ import net.minecraft.tags.BiomeTags;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 import com.google.common.collect.ImmutableList;
 
 import com.quantum.quantum_quarry.helpers.WorldGen.SingleBiomeProvider;
@@ -43,12 +46,13 @@ import com.quantum.quantum_quarry.helpers.WorldGen.SimpleGenerationChunkHolder;
 
 public class TemporaryWorldUtil {
     public static ProtoChunk createVoidChunk(ServerLevel level, Holder<Biome> biome) {
+        if (biome == null) {
+            biome = randomBiome(level);
+        }
         ResourceKey<DimensionType> dimension = getDimensionFromBiome(level.registryAccess(), biome);
         RegistryAccess registryAccess = level.registryAccess();
         Registry<Biome> biomeRegistry = registryAccess.registryOrThrow(Registries.BIOME);
-        //egistry<NoiseGeneratorSettings> noiseSettingsRegistry = registryAccess.registryOrThrow(Registries.NOISE_SETTINGS);
         BiomeSource biomeSource = new SingleBiomeProvider(biome);
-        //Holder<NoiseGeneratorSettings> noiseSettings = noiseSettingsRegistry.getHolderOrThrow(NoiseGeneratorSettings.OVERWORLD);
 
         Registry<NoiseGeneratorSettings> noiseSettingsRegistry = level.registryAccess().registryOrThrow(Registries.NOISE_SETTINGS);
         Holder<NoiseGeneratorSettings> noiseSettings = null;
@@ -63,15 +67,27 @@ public class TemporaryWorldUtil {
 
         ChunkGenerator chunkGenerator = new NoiseBasedChunkGenerator(biomeSource, noiseSettings);
         ChunkPos chunkPos = getRandomChunkPos();
+        Map<ChunkPos, ProtoChunk> chunkMap = new HashMap<>();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                ChunkPos pos = new ChunkPos(chunkPos.x + dx, chunkPos.z + dz);
+                ProtoChunk protoChunk = new ProtoChunk(
+                    pos, 
+                    UpgradeData.EMPTY, 
+                    level, 
+                    biomeRegistry, 
+                    null
+                );
+                chunkMap.put(pos, protoChunk);
+            }
+        }
+        for (ProtoChunk protoChunk : chunkMap.values()) {
+            generateChunk(level, chunkGenerator, noiseSettings, noiseParameters, protoChunk, chunkMap);
+        }
+        return chunkMap.get(chunkPos);
+    }
 
-        ProtoChunk protoChunk = new ProtoChunk(
-            chunkPos, 
-            UpgradeData.EMPTY, 
-            level, 
-            biomeRegistry, 
-            null
-        );
-
+    private static void generateChunk(ServerLevel level, ChunkGenerator chunkGenerator, Holder<NoiseGeneratorSettings> noiseSettings, HolderGetter<NoiseParameters> noiseParameters, ProtoChunk protoChunk, Map<ChunkPos, ProtoChunk> chunkMap) {
         long seed = level.getSeed();
         RandomState randomState = RandomState.create(noiseSettings.value(), noiseParameters, level.getSeed());
         StructureManager structureManager = level.structureManager();
@@ -110,7 +126,7 @@ public class TemporaryWorldUtil {
             protoChunk
         );
         chunkGenerator.createStructures(
-            registryAccess,
+            level.registryAccess(),
             level.getChunkSource().getGeneratorState(),
             structureManager,
             protoChunk,
@@ -121,7 +137,6 @@ public class TemporaryWorldUtil {
             protoChunk,
             structureManager
         );
-        return protoChunk;
     }
 
     private static WorldGenRegion genRegion(ServerLevel level, ProtoChunk chunk) {
@@ -164,5 +179,26 @@ public class TemporaryWorldUtil {
         int x = random.nextInt(1000000) - 500000;
         int z = random.nextInt(1000000) - 500000;
         return new ChunkPos(x, z);
+    }
+
+    private static Holder<Biome> randomBiome(ServerLevel level) {
+        Registry<Biome> biomeRegistry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        List<Holder<Biome>> allBiomes = biomeRegistry.holders().collect(Collectors.toList());
+
+        List<Holder<Biome>> dimensionBiomes = allBiomes.stream()
+            .filter(biomeHolder -> {
+                ResourceKey<DimensionType> dimension = getDimensionFromBiome(level.registryAccess(), biomeHolder);
+                if (dimension == BuiltinDimensionTypes.OVERWORLD || dimension == BuiltinDimensionTypes.NETHER || dimension == BuiltinDimensionTypes.END) {
+                    return true;
+                }
+                return false;
+            }).collect(Collectors.toList());
+
+        if (!dimensionBiomes.isEmpty()) {
+            Random random = new Random();
+            return dimensionBiomes.get(random.nextInt(allBiomes.size()));
+        } else {
+            return null; //never gonna happen
+        }
     }
 }
