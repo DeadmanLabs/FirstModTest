@@ -13,8 +13,12 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
@@ -23,6 +27,7 @@ import com.quantum.quantum_quarry.init.BlockEntities;
 
 public class QuarryBlock extends Block implements EntityBlock {
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final BooleanProperty POWERED = BooleanProperty.create("powered");
 
     public QuarryBlock(BlockBehaviour.Properties properties) {
         super(properties);
@@ -47,5 +52,11 @@ public class QuarryBlock extends Block implements EntityBlock {
                 blockEntity.setOwner(player.getUUID());
             }
         }
+    }
+
+    @Override
+    public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+        
+        return InteractionResult.sidedSuccess(world.isClientSide);
     }
 }

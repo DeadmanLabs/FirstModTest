@@ -1,5 +1,6 @@
 package com.quantum.quantum_quarry.client.gui;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
@@ -11,11 +12,15 @@ import net.minecraft.client.gui.GuiGraphics;
 
 import java.util.HashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 
 public class Screen extends AbstractContainerScreen<ScreenMenu> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Screen.class);
     private final static HashMap<String, Object> guistate = ScreenMenu.guistate;
     private final Level world;
     private final int x, y, z;
@@ -32,7 +37,24 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         this.entity = container.entity;
         this.imageWidth = 176;
         this.imageHeight = 196;
-        this.quarryEntity = (QuarryBlockEntity)container.getBoundEntity();
+        this.quarryEntity = container.getQuarryEntity();
+        if (this.quarryEntity == null) {
+            LOGGER.info("Block at {} has no entity!", new BlockPos(this.x, this.y, this.z));
+        }
+        if (container != null) {
+            if (container.world == null) {
+                LOGGER.warn("World is null!");
+            }
+            if (container.entity == null) {
+                LOGGER.warn("Entity is null!");
+            }
+            LOGGER.info("Container Location: {}", new BlockPos(this.x, this.y, this.z));
+            if (container.boundBlockEntity == null) {
+                LOGGER.warn("Block entity is null!");
+            }
+        } else {
+            LOGGER.info("We have a big problem...");
+        }
     }
 
     private static final ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/quantum_miner_screen.png");
@@ -41,16 +63,20 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
-        switch (this.quarryEntity.getMode()) {
-            case 0:
-                guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstone_resize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
-                break;
-            case 1:
-                guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
-                break;
-            case 2:
-                guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
-                break;
+        if (this.quarryEntity != null) {
+            switch (this.quarryEntity.getMode()) {
+                case 0:
+                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstone_resize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                    break;
+                case 1:
+                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                    break;
+                case 2:
+                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                    break;
+            }
+        } else {
+            LOGGER.info("Screen has unbound quarry entity!");
         }
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
@@ -84,9 +110,9 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_quarry_level"), 24, 17, -12829636, false);
         guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_blocks_mined"), 24, 28, -12829636, false);
         guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_biome"), 24, 39, -12829636, false);
-        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_0"), 93, 18, -12829636, false);
-        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_01"), 93, 28, -12829636, false);
-        guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_none"), 56, 39, -12829636, false);
+        guiGraphics.drawString(this.font, Component.literal("X"), 93, 18, -12829636, false);
+        guiGraphics.drawString(this.font, Component.literal(this.quarryEntity == null ? "X" : String.valueOf(this.quarryEntity.manager.minedBlocks)), 93, 28, -12829636, false);
+        guiGraphics.drawString(this.font, Component.literal(this.quarryEntity == null ? "X" : this.quarryEntity.manager.currentBiome.toString()), 56, 39, -12829636, false);
     }
 
     @Override
@@ -98,7 +124,9 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     public void init() {
         super.init();
         button_mode = Button.builder(Component.translatable("gui.quantum_quarry.quantum_miner_screen.button_empty"), e -> {
-            this.quarryEntity.cycleMode();
+            if (this.quarryEntity != null) {
+                this.quarryEntity.cycleMode();
+            }
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
         guistate.put("button:button_mode", button_mode);
         this.addRenderableWidget(button_mode);

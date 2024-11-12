@@ -4,15 +4,20 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import java.util.stream.IntStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup.Provider;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.WorldlyContainer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
@@ -23,11 +28,16 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
 
 //import com.quantum.quantum_quarry.helpers.ChunkMiner;
 import com.quantum.quantum_quarry.helpers.AlternateDimension.ChunkMiner;
@@ -37,15 +47,17 @@ import com.quantum.quantum_quarry.procedures.FindCore;
 
 import io.netty.buffer.Unpooled;
 
-public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
+public class QuarryBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer {
     private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);
     private UUID owner;
     public ChunkMiner manager;
     public static final int TANK_CAPACITY = 20000;
-    private final EnergyStorage energyStorage = new EnergyStorage(200000);
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
     private BlockPos location;
     private int mode;
+
+    private NonNullList<ItemStack> stacks = NonNullList.<ItemStack>withSize(2, ItemStack.EMPTY);
+    private final SidedInvWrapper handler = new SidedInvWrapper(this, null);
 
     public QuarryBlockEntity(BlockPos pos, BlockState state) {
         super(BlockEntities.QUARRY_BLOCK_ENTITY.get(), pos, state);
@@ -76,6 +88,7 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
                     FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
                     if (item != null /* && blockEntity.energyStorage.extractEnergy(1, true) == 1 */) {
                         //blockEntity.energyStorage.extractEnergy(1, false);
+                        blockEntity.manager.minedBlocks++;
                         BlockPos[] storages = FindCore.findStorage(level, core);
                         for (BlockPos storage : storages) {
                             if (FindCore.insertItem(level, storage, item)) {
@@ -96,7 +109,7 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
                         LOGGER.info("stack is empty!");
                     }
                 } else {
-                    LOGGER.info("Miner structure is not valid!");
+                    //LOGGER.info("Miner structure is not valid!");
                 }
             } else {
                 LOGGER.warn("Owner is null!");
@@ -116,12 +129,6 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
         } else {
             return false;
         }
-    }
-
-    @Override
-    public void setRemoved() {
-        super.setRemoved();
-        level.invalidateCapabilities(this.location);
     }
 
     @Override
@@ -158,16 +165,6 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
         }
     }
 
-    @Override
-    public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
-        return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(this.worldPosition));
-    }
-
-    @Override
-    public Component getDisplayName() {
-        return Component.literal("Quantum Quarry");
-    }
-
     public int getMode() {
         return this.getMode();
     }
@@ -178,4 +175,115 @@ public class QuarryBlockEntity extends BlockEntity implements MenuProvider {
             this.mode = 0;
         }
     }
+
+    @Override
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    @Override 
+    public CompoundTag getUpdateTag(Provider lookupProvider) {
+        return this.saveWithFullMetadata(lookupProvider);
+    }
+
+    @Override
+    public int getContainerSize() {
+        return stacks.size();
+    }
+
+    @Override 
+    public boolean isEmpty() {
+        for (ItemStack itemstack : this.stacks) {
+            if (!itemstack.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public Component getDefaultName() {
+        return Component.literal("quantum_quarry");
+    }
+
+    @Override
+    public int getMaxStackSize() {
+        return 1;
+    }
+
+    @Override
+    public AbstractContainerMenu createMenu(int id, Inventory inventory) {
+        level.sendBlockUpdated(this.worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 3);
+        return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(this.worldPosition));
+    }
+
+    @Override
+    public Component getDisplayName() {
+        return Component.literal("Quantum Quarry");
+    }
+
+    @Override
+    protected NonNullList<ItemStack> getItems() {
+        return this.stacks;
+    }
+
+    @Override
+    protected void setItems(NonNullList<ItemStack> stacks) {
+        this.stacks = stacks;
+    }
+
+    @Override
+    public boolean canPlaceItem(int index, ItemStack stack) {
+        return true;
+    }
+
+    @Override
+    public int[] getSlotsForFace(Direction side) {
+        return IntStream.range(0, this.getContainerSize()).toArray();
+    }
+
+    @Override
+    public boolean canPlaceItemThroughFace(int index, ItemStack stack, @Nullable Direction direction) {
+        return this.canPlaceItem(index, stack);
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int index, ItemStack stack, Direction direction) {
+        if (index == 0)
+            return false;
+        if (index == 1)
+            return false;
+        return true;
+    }
+
+    public SidedInvWrapper getItemHandler() {
+        return handler;
+    }
+
+    private final EnergyStorage energyStorage = new EnergyStorage(200000, 200000, 0, 0) {
+        @Override
+        public int receiveEnergy(int maxReceive, boolean simulate) {
+            int retval = super.receiveEnergy(maxReceive, simulate);
+            if (!simulate) {
+                setChanged();
+                level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 2);
+            }
+            return retval;
+        }
+
+        @Override
+        public int extractEnergy(int maxExtract, boolean simulate) {
+            int retval = super.extractEnergy(maxExtract, simulate);
+            if (!simulate) {
+                setChanged();
+                level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 2);
+            }
+            return retval;
+        }
+    };
+
+    public EnergyStorage getEnergyStorage() {
+        return energyStorage;
+    }
+
 }

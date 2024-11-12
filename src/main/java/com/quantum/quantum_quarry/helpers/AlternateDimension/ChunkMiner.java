@@ -48,8 +48,9 @@ public class ChunkMiner {
     private final ServerLevel level;
     public final Queue<ItemStack> itemsToGive = new LinkedList<>();
     public final Queue<FluidStack> fluidsToGive = new LinkedList<>();
-    public Holder<Biome> currentBiome = null;
+    public ResourceKey<Biome> currentBiome = null;
     public DimensionType dimension = null;
+    public int minedBlocks = 0;
     private ChunkPos currentPos = null;
 
     public ChunkMiner(ServerLevel level) {
@@ -95,7 +96,7 @@ public class ChunkMiner {
             LOGGER.info("Loaded chunk at position: {} in dimension: {}", pos, dimension);
             this.currentPos = pos;
             this.dimension = targetLevel.dimensionType();
-            this.currentBiome = null;
+            this.currentBiome = getBiomeOfChunk(targetLevel, chunkAccess.getPos());
             return (LevelChunk)chunkAccess;
         } else {
             LOGGER.warn("Failed to cast LevelChunk to chunkAccess!");
@@ -199,9 +200,11 @@ public class ChunkMiner {
         return dimensions.get(random.nextInt(dimensions.size()));
     }
 
-    public static Holder<Biome> getBiomeOfChunk(ServerLevel level, ChunkPos pos) {
+    public static ResourceKey<Biome> getBiomeOfChunk(ServerLevel level, ChunkPos pos) {
         // Estimated
         LevelChunk chunk = level.getChunk(pos.x, pos.z);
-        return chunk.getNoiseBiome(((pos.x << 4) + 8) >> 2, 0, ((pos.z << 4) + 8) >> 2);
+        Holder<Biome> biome = chunk.getNoiseBiome(((pos.x << 4) + 8) >> 2, 0, ((pos.z << 4) + 8) >> 2);
+        ResourceKey<Biome> biomeKey = biome.unwrapKey().orElse(null);
+        return biomeKey;
     }
 }

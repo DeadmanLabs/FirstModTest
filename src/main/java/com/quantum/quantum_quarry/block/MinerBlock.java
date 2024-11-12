@@ -23,6 +23,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -60,8 +61,17 @@ public class MinerBlock extends Block {
                 boolean isQuarryValid = FindCore.validateStructure(world, quarry);
                 if (isQuarryValid) {
                     BlockEntity blockEntity = world.getBlockEntity(quarry);
-                    // Open the interface
-                    LOGGER.info("Machine is functional!");
+                    LOGGER.info("Machine is functional! Displaying GUI...");
+                    if (!world.isClientSide && blockEntity instanceof QuarryBlockEntity quarryEntity && player instanceof ServerPlayer serverPlayer) {
+                        serverPlayer.openMenu(
+                            new SimpleMenuProvider(
+                                (id, inventory, player_inst) -> quarryEntity.createMenu(id, inventory, player_inst), 
+                                quarryEntity.getDisplayName()
+                            )
+                        );
+                    } else {
+                        throw new IllegalStateException("Our named container provider is missing!");
+                    }
                 } else {
                     if (!world.isClientSide() && world.getServer() != null) {
                         player.displayClientMessage(Component.literal("The Machine is Incomplete!"), true);
