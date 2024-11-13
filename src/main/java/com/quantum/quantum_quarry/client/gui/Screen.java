@@ -39,7 +39,10 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         this.imageHeight = 196;
         this.quarryEntity = container.getQuarryEntity();
         if (this.quarryEntity == null) {
-            LOGGER.info("Block at {} has no entity!", new BlockPos(this.x, this.y, this.z));
+            LOGGER.info("Quarry at {} has no entity!", new BlockPos(this.x, this.y, this.z));
+        }
+        if (container.getBoundEntity() == null) {
+            LOGGER.info("Block Entity at {} has no entity!", new BlockPos(this.x, this.y, this.z));
         }
         if (container != null) {
             if (container.world == null) {

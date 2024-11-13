@@ -124,6 +124,23 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         }
     }
 
+    public ScreenMenu(int id, Inventory inv, Player player, BlockPos quarryPos) {
+        super(Menus.QUANTUM_MINER_SCREEN.get(), id);
+        this.entity = inv.player;
+        this.world = inv.player.level();
+        this.internal = new ItemStackHandler(2);
+        if (quarryPos != null && this.world.getBlockEntity(quarryPos) instanceof QuarryBlockEntity quarryEntity) {
+            this.boundBlockEntity = quarryEntity;
+            if ((BlockEntity)this.boundBlockEntity instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
+                this.internal = new InvWrapper(baseContainerBlockEntity);
+                this.bound = true;
+            }
+            if (this.boundBlockEntity == null) {
+                LOGGER.info("How dare you!");
+            }
+        }
+    }
+
     @Override
     public boolean stillValid(Player player) {
         if (this.bound) {
@@ -132,8 +149,9 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
             } else if (this.boundEntity != null) {
                 return this.boundEntity.isAlive();
             } else if (this.boundBlockEntity != null) {
-                //Add machine integrity check here
-                return AbstractContainerMenu.stillValid(this.access, player, this.boundBlockEntity.getBlockState().getBlock());
+                if (FindCore.validateStructure(this.world, this.boundBlockEntity.getBlockPos())) {
+                    return AbstractContainerMenu.stillValid(this.access, player, this.boundBlockEntity.getBlockState().getBlock());
+                }
             } 
         }
         return true;

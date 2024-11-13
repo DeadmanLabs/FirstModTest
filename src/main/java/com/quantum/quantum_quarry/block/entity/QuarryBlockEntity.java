@@ -213,7 +213,6 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory) {
-        level.sendBlockUpdated(this.worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), 3);
         return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(this.worldPosition));
     }
 

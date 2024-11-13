@@ -20,10 +20,11 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -34,6 +35,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 import com.quantum.quantum_quarry.init.BlockEntities;
 import com.quantum.quantum_quarry.procedures.FindCore;
+import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,10 +66,16 @@ public class MinerBlock extends Block {
                     LOGGER.info("Machine is functional! Displaying GUI...");
                     if (!world.isClientSide && blockEntity instanceof QuarryBlockEntity quarryEntity && player instanceof ServerPlayer serverPlayer) {
                         serverPlayer.openMenu(
-                            new SimpleMenuProvider(
-                                (id, inventory, player_inst) -> quarryEntity.createMenu(id, inventory, player_inst), 
-                                quarryEntity.getDisplayName()
-                            )
+                            new MenuProvider() {
+                                @Override
+                                public Component getDisplayName() {
+                                    return quarryEntity.getDisplayName();
+                                }
+                                @Override
+                                public AbstractContainerMenu createMenu(int id, Inventory playerInventory, Player playerEntity) {
+                                    return new ScreenMenu(id, playerInventory, playerEntity, quarryEntity.getBlockPos());
+                                }
+                            }
                         );
                     } else {
                         throw new IllegalStateException("Our named container provider is missing!");
