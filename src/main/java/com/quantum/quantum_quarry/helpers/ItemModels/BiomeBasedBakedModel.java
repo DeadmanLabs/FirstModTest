@@ -21,30 +21,86 @@ import net.neoforged.neoforge.client.model.data.ModelData;
 
 public class BiomeBasedBakedModel implements BakedModel {
     private final BakedModel originalModel;
-    private static final List<ResourceKey<Biome>> plains = new ArrayList<>() {
-
-    };
-    private static final List<ResourceKey<Biome>> desert = new ArrayList<>() {
+    private static final List<ResourceKey<Biome>> plains = List.of(
+    	Biomes.PLAINS,
+    	Biomes.BAMBOO_JUNGLE,
+    	Biomes.BIRCH_FOREST,
+    	Biomes.CHERRY_GROVE,
+    	Biomes.DARK_FOREST,
+    	Biomes.FOREST,
+    	Biomes.GROVE,
+    	Biomes.JUNGLE,
+    	Biomes.BEACH,
+    	Biomes.SNOWY_BEACH,
+    	Biomes.SNOWY_PLAINS,
+    	Biomes.SPARSE_JUNGLE,
+    	Biomes.WINDSWEPT_HILLS,
+    	Biomes.WINDSWEPT_GRAVELLY_HILLS,
+    	Biomes.WINDSWEPT_FOREST,
+    	Biomes.TAIGA,
+    	Biomes.SWAMP,
+    	Biomes.SUNFLOWER_PLAINS,
+    	Biomes.STONY_SHORE,
+    	Biomes.STONY_PEAKS,
+    	Biomes.SNOWY_TAIGA,
+    	Biomes.SNOWY_SLOPES,
+    	Biomes.DEEP_DARK,
+    	Biomes.DRIPSTONE_CAVES,
+    	Biomes.FLOWER_FOREST,
+    	Biomes.JAGGED_PEAKS,
+    	Biomes.LUSH_CAVES,
+    	Biomes.MANGROVE_SWAMP,
+    	Biomes.MEADOW,
+    	Biomes.MUSHROOM_FIELDS,
+    	Biomes.OLD_GROWTH_BIRCH_FOREST,
+    	Biomes.OLD_GROWTH_PINE_TAIGA,
+    	Biomes.OLD_GROWTH_SPRUCE_TAIGA
+    );
+    private static final List<ResourceKey<Biome>> desert = List.of(
         Biomes.BADLANDS,
-    };
-    private static final List<ResourceKey<Biome>> nether = new ArrayList<>() {
-
-    };
-    private static final List<ResourceKey<Biome>> soulsand = new ArrayList<>() {
-
-    };
-    private static final List<ResourceKey<Biome>> end = new ArrayList<>() {
-
-    };
-    private static final List<ResourceKey<Biome>> basalt = new ArrayList<>() {
-
-    };
-    private static final List<ResourceKey<Biome>> ice = new ArrayList<>() {
-
-    };
-    private static final List<ResourceKey<Biome>> ocean = new ArrayList<>() {
-
-    };
+        Biomes.WOODED_BADLANDS,
+        Biomes.SAVANNA,
+        Biomes.SAVANNA_PLATEAU,
+        Biomes.DESERT,
+        Biomes.WINDSWEPT_SAVANNA,
+        Biomes.ERODED_BADLANDS
+    );
+    private static final List<ResourceKey<Biome>> nether = List.of(
+	    Biomes.NETHER_WASTES,
+        Biomes.WARPED_FOREST,
+        Biomes.CRIMSON_FOREST
+    );
+    private static final List<ResourceKey<Biome>> soulsand = List.of(
+    	Biomes.SOUL_SAND_VALLEY
+    );
+    private static final List<ResourceKey<Biome>> end = List.of(
+	    Biomes.END_BARRENS,
+	    Biomes.END_HIGHLANDS,
+	    Biomes.END_MIDLANDS,
+        Biomes.THE_END,
+        Biomes.THE_VOID,
+        Biomes.SMALL_END_ISLANDS
+    );
+    private static final List<ResourceKey<Biome>> basalt = List.of(
+	    Biomes.BASALT_DELTAS
+    );
+    private static final List<ResourceKey<Biome>> ice = List.of(
+	    Biomes.FROZEN_PEAKS,
+	    Biomes.FROZEN_RIVER,
+        Biomes.ICE_SPIKES
+    );
+    private static final List<ResourceKey<Biome>> ocean = List.of(
+    	Biomes.DEEP_COLD_OCEAN,
+    	Biomes.DEEP_FROZEN_OCEAN,
+    	Biomes.DEEP_LUKEWARM_OCEAN,
+        Biomes.DEEP_OCEAN,
+        Biomes.COLD_OCEAN,
+        Biomes.FROZEN_OCEAN,
+        Biomes.OCEAN,
+        Biomes.RIVER,
+        Biomes.WARM_OCEAN,
+        Biomes.LUKEWARM_OCEAN
+    );
 
     public BiomeBasedBakedModel(BakedModel originalModel) {
         this.originalModel = originalModel;
@@ -62,139 +118,6 @@ public class BiomeBasedBakedModel implements BakedModel {
 
         List<BakedQuad> quads = new ArrayList<>();
 
-        switch (biome) {
-            case Biomes.BADLANDS:
-                break;
-            case Biomes.BAMBOO_JUNGLE:
-                break;
-            case Biomes.BASALT_DELTAS:
-            break;
-            case Biomes.BEACH:
-                break;
-            case Biomes.BIRCH_FOREST:
-                break;
-            case Biomes.CHERRY_GROVE:
-                break;
-            case Biomes.COLD_OCEAN:
-                break;
-            case Biomes.CRIMSON_FOREST:
-                break;
-            case Biomes.DARK_FOREST:
-                break;
-            case Biomes.DEEP_COLD_OCEAN:
-                break;
-            case Biomes.DEEP_DARK:
-                break;
-            case Biomes.DEEP_FROZEN_OCEAN:
-                break;
-            case Biomes.DEEP_LUKEWARM_OCEAN:
-                break;
-            case Biomes.DEEP_OCEAN:
-                break;
-            case Biomes.DESERT:
-                break;
-            case Biomes.DRIPSTONE_CAVES:
-                break;
-            case Biomes.END_BARRENS:
-                break;
-            case Biomes.END_HIGHLANDS:
-                break;
-            case Biomes.END_MIDLANDS:
-                break;
-            case Biomes.ERODED_BADLANDS:
-                break;
-            case Biomes.FLOWER_FOREST:
-                break;
-            case Biomes.FOREST:
-                break;
-            case Biomes.FROZEN_OCEAN:
-                break;
-            case Biomes.FROZEN_PEAKS:
-                break;
-            case Biomes.FROZEN_RIVER:
-                break;
-            case Biomes.GROVE:
-                break;
-            case Biomes.ICE_SPIKES:
-                break;
-            case Biomes.JAGGED_PEAKS:
-                break;
-            case Biomes.JUNGLE:
-                break;
-            case Biomes.LUKEWARM_OCEAN:
-                break;
-            case Biomes.LUSH_CAVES:
-                break;
-            case Biomes.MANGROVE_SWAMP:
-                break;
-            case Biomes.MEADOW:
-                break;
-            case Biomes.MUSHROOM_FIELDS:
-                break;
-            case Biomes.NETHER_WASTES:
-                break;
-            case Biomes.OCEAN:
-                break;
-            case Biomes.OLD_GROWTH_BIRCH_FOREST:
-                break;
-            case Biomes.OLD_GROWTH_PINE_TAIGA:
-                break;
-            case Biomes.OLD_GROWTH_SPRUCE_TAIGA:
-                break;
-            case Biomes.PLAINS:
-                break;
-            case Biomes.RIVER:
-                break;
-            case Biomes.SAVANNA:
-                break;
-            case Biomes.SAVANNA_PLATEAU:
-                break;
-            case Biomes.SMALL_END_ISLANDS:
-                break;
-            case Biomes.SNOWY_BEACH:
-                break;
-            case Biomes.SNOWY_PLAINS:
-                break;
-            case Biomes.SNOWY_SLOPES:
-                break;
-            case Biomes.SNOWY_TAIGA:
-                break;
-            case Biomes.SOUL_SAND_VALLEY:
-                break;
-            case Biomes.SPARSE_JUNGLE:
-                break;
-            case Biomes.STONY_PEAKS:
-                break;
-            case Biomes.STONY_SHORE:
-                break;
-            case Biomes.SUNFLOWER_PLAINS:
-                break;
-            case Biomes.SWAMP:
-                break;
-            case Biomes.TAIGA:
-                break;
-            case Biomes.THE_END:
-                break;
-            case Biomes.THE_VOID:
-                break;
-            case Biomes.WARM_OCEAN:
-                break;
-            case Biomes.WARPED_FOREST:
-                break;
-            case Biomes.WINDSWEPT_FOREST:
-                break;
-            case Biomes.WINDSWEPT_GRAVELLY_HILLS:
-                break;
-            case Biomes.WINDSWEPT_HILLS:
-                break;
-            case Biomes.WINDSWEPT_SAVANNA:
-                break;
-            case Biomes.WOODED_BADLANDS:
-                break;
-            default:
-
-                break;
-        }
         return quads;
     }
 
