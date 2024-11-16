@@ -1,23 +1,22 @@
 package com.quantum.quantum_quarry.client.gui;
 
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.network.chat.Component;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.GuiGraphics;
-
 import java.util.HashMap;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
+import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
+
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
 
 public class Screen extends AbstractContainerScreen<ScreenMenu> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Screen.class);
@@ -37,27 +36,7 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         this.entity = container.entity;
         this.imageWidth = 176;
         this.imageHeight = 196;
-        this.quarryEntity = container.getQuarryEntity();
-        if (this.quarryEntity == null) {
-            LOGGER.info("Quarry at {} has no entity!", new BlockPos(this.x, this.y, this.z));
-        }
-        if (container.getBoundEntity() == null) {
-            LOGGER.info("Block Entity at {} has no entity!", new BlockPos(this.x, this.y, this.z));
-        }
-        if (container != null) {
-            if (container.world == null) {
-                LOGGER.warn("World is null!");
-            }
-            if (container.entity == null) {
-                LOGGER.warn("Entity is null!");
-            }
-            LOGGER.info("Container Location: {}", new BlockPos(this.x, this.y, this.z));
-            if (container.boundBlockEntity == null) {
-                LOGGER.warn("Block entity is null!");
-            }
-        } else {
-            LOGGER.info("We have a big problem...");
-        }
+        this.quarryEntity = (QuarryBlockEntity)container.getBoundEntity();
     }
 
     private static final ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/quantum_miner_screen.png");
@@ -66,7 +45,6 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
-        if (this.quarryEntity != null) {
             switch (this.quarryEntity.getMode()) {
                 case 0:
                     guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstone_resize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
@@ -78,9 +56,6 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
                     guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
                     break;
             }
-        } else {
-            LOGGER.info("Screen has unbound quarry entity!");
-        }
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
@@ -127,9 +102,7 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     public void init() {
         super.init();
         button_mode = Button.builder(Component.translatable("gui.quantum_quarry.quantum_miner_screen.button_empty"), e -> {
-            if (this.quarryEntity != null) {
-                this.quarryEntity.cycleMode();
-            }
+            this.quarryEntity.cycleMode();
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
         guistate.put("button:button_mode", button_mode);
         this.addRenderableWidget(button_mode);

@@ -46,7 +46,7 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
     private boolean bound = false;
     private Supplier<Boolean> boundItemMatcher = null;
     private Entity boundEntity = null;
-    public QuarryBlockEntity boundBlockEntity = null;
+    private BlockEntity boundBlockEntity = null;
     private static final Logger LOGGER = LoggerFactory.getLogger(ScreenMenu.class);
 
     public ScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
@@ -55,25 +55,14 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         this.world = inv.player.level();
         this.internal = new ItemStackHandler(2);
         BlockPos pos = null;
-        BlockPos quarryPos = null;
         if (extraData != null) {
             pos = extraData.readBlockPos();
-            LOGGER.info("Received position: {}", pos);
             this.x = pos.getX();
             this.y = pos.getY();
             this.z = pos.getY();
-            quarryPos = FindCore.execute(this.world, pos.getX(), pos.getY(), pos.getZ());
-            if (quarryPos != null) {
-                this.x = quarryPos.getX();
-                this.y = quarryPos.getY();
-                this.z = quarryPos.getZ();
-                LOGGER.info("Quarry position: {}", quarryPos);
-                access = ContainerLevelAccess.create(world, quarryPos);
-            }
-        } else {
-            LOGGER.info("Extra Data is null!");
+            access = ContainerLevelAccess.create(world, quarryPos);
         }
-        if (quarryPos != null && this.world.getBlockEntity(quarryPos) instanceof QuarryBlockEntity quarryEntity) {
+        if (pos != null) {
             if (extraData.readableBytes() == 1) {
                 LOGGER.info("Item Owner Detected!");
                 byte hand = extraData.readByte();
@@ -87,8 +76,8 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
             } else if (extraData.readableBytes() > 1) {
                 LOGGER.info("Entity Owner Detected!");
                 extraData.readByte();
-                this.boundEntity = world.getEntity(extraData.readVarInt());
-                if (this.boundEntity != null) {
+                boundEntity = world.getEntity(extraData.readVarInt());
+                if (boundEntity != null) {
                     IItemHandler cap = boundEntity.getCapability(Capabilities.ItemHandler.ENTITY);
                     if (cap != null) {
                         this.internal = cap;
@@ -97,17 +86,12 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
                 }
             } else {
                 LOGGER.info("Block Entity Owner Detected!");
-                this.boundBlockEntity = quarryEntity;
-                if ((BlockEntity)this.boundBlockEntity instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
+                boundBlockEntity = this.world.getBlockEntity(pos);
+                if (boundBlockEntity instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
                     this.internal = new InvWrapper(baseContainerBlockEntity);
                     this.bound = true;
                 }
-                if (this.boundBlockEntity == null) {
-                    LOGGER.info("How dare you!");
-                }
             }
-        } else {
-            LOGGER.info("Quarry is null or quarry block is not proper entity!");
         }
         this.customSlots.put(0, this.addSlot(new SlotItemHandler(internal, 0, 6, 18) {
             @Override
@@ -131,23 +115,6 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         }
     }
 
-    public ScreenMenu(int id, Inventory inv, Player player, BlockPos quarryPos) {
-        super(Menus.QUANTUM_MINER_SCREEN.get(), id);
-        this.entity = inv.player;
-        this.world = inv.player.level();
-        this.internal = new ItemStackHandler(2);
-        if (quarryPos != null && this.world.getBlockEntity(quarryPos) instanceof QuarryBlockEntity quarryEntity) {
-            this.boundBlockEntity = quarryEntity;
-            if ((BlockEntity)this.boundBlockEntity instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
-                this.internal = new InvWrapper(baseContainerBlockEntity);
-                this.bound = true;
-            }
-            if (this.boundBlockEntity == null) {
-                LOGGER.info("How dare you!");
-            }
-        }
-    }
-
     @Override
     public boolean stillValid(Player player) {
         if (this.bound) {
@@ -167,7 +134,7 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
     @Override
     public ItemStack quickMoveStack(Player playerIn, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
-        Slot slot = this.slots.get(index);
+        Slot slot = (Slot)this.slots.get(index);
         if (slot != null && slot.hasItem()) {
             ItemStack itemstack1 = slot.getItem();
             itemstack = itemstack1.copy();
@@ -283,14 +250,14 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         if (!bound && playerIn instanceof ServerPlayer serverPlayer) {
             if (!serverPlayer.isAlive() || serverPlayer.hasDisconnected()) {
                 for (int j = 0; j < internal.getSlots(); ++j) {
-                    playerIn.drop(internal.extractItem(j, internal.getStackInSlot(j).getCount(), false), false);
+                    playerIn.drop(internal.getStackInSlot(j), false);
                     if (internal instanceof IItemHandlerModifiable ihm) {
                         ihm.setStackInSlot(j, ItemStack.EMPTY);
                     }
                 }
             } else {
                 for (int i = 0; i < internal.getSlots(); ++i) {
-                    playerIn.getInventory().placeItemBackInInventory(internal.extractItem(i, internal.getStackInSlot(i).getCount(), false));
+                    playerIn.getInventory().placeItemBackInInventory(internal.getStackInSlot(i));
                     if (internal instanceof IItemHandlerModifiable ihm) {
                         ihm.setStackInSlot(i, ItemStack.EMPTY);
                     }
@@ -299,20 +266,11 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         }
     }
 
-    @Override
-    public void broadcastChanges() {
-        super.broadcastChanges();
-    }
-
     public Map<Integer, Slot> get() {
         return customSlots;
     }
 
     public BlockEntity getBoundEntity() {
-        return this.boundBlockEntity;
-    }
-
-    public QuarryBlockEntity getQuarryEntity() {
         return this.boundBlockEntity;
     }
 }
