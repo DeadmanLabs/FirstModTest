@@ -70,8 +70,6 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         this.owner = uuid;
         if (this.level instanceof ServerLevel serverLevel) {
             this.manager = new ChunkMiner(serverLevel); //null biome = all
-        } else {
-            LOGGER.info("Set owner but could not get instance of ServerLevel");
         }
     }
 
@@ -213,7 +211,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory) {
-        return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(this.worldPosition));
+        return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(location));
     }
 
     @Override
@@ -285,4 +283,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         return energyStorage;
     }
 
+    public BlockPos getLocation() {
+        return location;
+    }
 }

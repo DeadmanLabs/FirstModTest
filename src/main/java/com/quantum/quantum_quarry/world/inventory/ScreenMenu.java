@@ -59,6 +59,9 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         if (extraData != null) {
             pos = extraData.readBlockPos();
             LOGGER.info("Received position: {}", pos);
+            this.x = pos.getX();
+            this.y = pos.getY();
+            this.z = pos.getY();
             quarryPos = FindCore.execute(this.world, pos.getX(), pos.getY(), pos.getZ());
             if (quarryPos != null) {
                 this.x = quarryPos.getX();
@@ -67,6 +70,8 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
                 LOGGER.info("Quarry position: {}", quarryPos);
                 access = ContainerLevelAccess.create(world, quarryPos);
             }
+        } else {
+            LOGGER.info("Extra Data is null!");
         }
         if (quarryPos != null && this.world.getBlockEntity(quarryPos) instanceof QuarryBlockEntity quarryEntity) {
             if (extraData.readableBytes() == 1) {
@@ -101,6 +106,8 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
                     LOGGER.info("How dare you!");
                 }
             }
+        } else {
+            LOGGER.info("Quarry is null or quarry block is not proper entity!");
         }
         this.customSlots.put(0, this.addSlot(new SlotItemHandler(internal, 0, 6, 18) {
             @Override

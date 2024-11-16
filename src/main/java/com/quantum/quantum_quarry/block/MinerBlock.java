@@ -63,20 +63,8 @@ public class MinerBlock extends Block {
                 boolean isQuarryValid = FindCore.validateStructure(world, quarry);
                 if (isQuarryValid) {
                     BlockEntity blockEntity = world.getBlockEntity(quarry);
-                    LOGGER.info("Machine is functional! Displaying GUI...");
-                    if (!world.isClientSide && blockEntity instanceof QuarryBlockEntity quarryEntity && player instanceof ServerPlayer serverPlayer) {
-                        serverPlayer.openMenu(
-                            new MenuProvider() {
-                                @Override
-                                public Component getDisplayName() {
-                                    return quarryEntity.getDisplayName();
-                                }
-                                @Override
-                                public AbstractContainerMenu createMenu(int id, Inventory playerInventory, Player playerEntity) {
-                                    return new ScreenMenu(id, playerInventory, playerEntity, quarryEntity.getBlockPos());
-                                }
-                            }
-                        );
+                    if (player instanceof ServerPlayer serverPlayer && blockEntity instanceof QuarryBlockEntity quarryEntity) {
+                        serverPlayer.openMenu(quarryEntity);
                     } else {
                         throw new IllegalStateException("Our named container provider is missing!");
                     }

@@ -1,38 +1,36 @@
 package com.quantum.quantum_quarry.helpers.ItemModels;
 
-import net.minecraft.core.Direction;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.util.RandomSource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import org.joml.Vector3f;
+
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.Material;
-import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
-import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.BlockElementFace;
 import net.minecraft.client.renderer.block.model.BlockFaceUV;
 import net.minecraft.client.renderer.block.model.FaceBakery;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-
-import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.client.model.IDynamicBakedModel;
-
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Optional;
-import java.util.Map;
-
-import org.joml.Vector3f;
+import net.neoforged.neoforge.client.model.data.ModelData;
 
 public class BiomeGlobeModel implements IDynamicBakedModel {
     private static final Material MISSING_TEXTURE = new Material(TextureAtlas.LOCATION_BLOCKS, MissingTextureAtlasSprite.getLocation());
@@ -377,9 +375,10 @@ public class BiomeGlobeModel implements IDynamicBakedModel {
     @Override
     public List<BakedQuad> getQuads(BlockState state, Direction side, RandomSource rand, ModelData extraData, RenderType renderType) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || minecraft.level == null) {
+        if (minecraft.player == null || minecraft.level == null || renderType == null || RenderType.translucent().equals(renderType) == false) {
             return originalModel.getQuads(state, side, rand);
         }
+
         BlockPos playerPos = minecraft.player.blockPosition();
         Holder<Biome> biomeHolder = minecraft.level.getBiome(playerPos);
         Biome biome = biomeHolder.value();
@@ -407,6 +406,8 @@ public class BiomeGlobeModel implements IDynamicBakedModel {
                 universeQuads = constructUniverse(globe, iceMap, minecraft.level.random);
             } else if (ocean.contains(biomeKey)) {
                 universeQuads = constructUniverse(globe, oceanMap, minecraft.level.random);
+            } else {
+                universeQuads = constructUniverse(globe, plainsMap, minecraft.level.random);
             }
         }
 
