@@ -211,6 +211,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory) {
+        LOGGER.info("createMenu(id, inventory)");
         return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(location));
     }
 

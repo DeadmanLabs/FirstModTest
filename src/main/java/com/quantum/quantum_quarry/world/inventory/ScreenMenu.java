@@ -299,6 +299,11 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         }
     }
 
+    @Override
+    public void broadcastChanges() {
+        super.broadcastChanges();
+    }
+
     public Map<Integer, Slot> get() {
         return customSlots;
     }
