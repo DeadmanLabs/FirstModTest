@@ -51,7 +51,6 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
 
     public ScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
         super(Menus.QUANTUM_MINER_SCREEN.get(), id);
-        LOGGER.info("Hello from ScreenMenu constructor!");
         this.entity = inv.player;
         this.world = inv.player.level();
         this.internal = new ItemStackHandler(2);
@@ -65,7 +64,6 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
         }
         if (pos != null) {
             if (extraData.readableBytes() == 1) {
-                LOGGER.info("Item Owner Detected!");
                 byte hand = extraData.readByte();
                 ItemStack itemstack = hand == 0 ? this.entity.getMainHandItem() : this.entity.getOffhandItem();
                 this.boundItemMatcher = () -> itemstack == (hand == 0 ? this.entity.getMainHandItem() : this.entity.getOffhandItem());
@@ -75,7 +73,6 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
                     this.bound = true;
                 }
             } else if (extraData.readableBytes() > 1) {
-                LOGGER.info("Entity Owner Detected!");
                 extraData.readByte();
                 boundEntity = world.getEntity(extraData.readVarInt());
                 if (boundEntity != null) {
@@ -86,7 +83,6 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
                     }
                 }
             } else {
-                LOGGER.info("Block Entity Owner Detected!");
                 boundBlockEntity = this.world.getBlockEntity(pos);
                 if (boundBlockEntity instanceof BaseContainerBlockEntity baseContainerBlockEntity) {
                     this.internal = new InvWrapper(baseContainerBlockEntity);

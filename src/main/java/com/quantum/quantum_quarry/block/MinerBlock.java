@@ -56,12 +56,9 @@ public class MinerBlock extends Block {
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        LOGGER.info("Hello from Miner Block Use!");
         BlockPos quarry = FindCore.execute(world, pos.getX(), pos.getY(), pos.getZ());
         if (quarry != null && world.getBlockState(quarry).getBlock() instanceof QuarryBlock quarryBlock) {
             quarryBlock.useWithoutItem(state, world, quarry, player, hit);
-        } else {
-            LOGGER.info("Failure to find quarry block! {}", (quarry != null ? "Quarry Not Null!" : "Quarry Null!"));
         }
         return InteractionResult.sidedSuccess(world.isClientSide);
     }

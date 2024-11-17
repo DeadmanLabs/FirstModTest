@@ -72,7 +72,6 @@ public class QuarryBlock extends Block implements EntityBlock {
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
         super.useWithoutItem(state, world, pos, player, hit);
-        LOGGER.info("Hello from Quarry Block use!");
         if (!world.isClientSide) {
             boolean isQuarryValid = FindCore.validateStructure(world, pos);
             if (isQuarryValid) {
@@ -85,7 +84,6 @@ public class QuarryBlock extends Block implements EntityBlock {
                         }
                         @Override
                         public AbstractContainerMenu createMenu(int id, Inventory inventory, Player player) {
-                            LOGGER.info("Hello from Quarry Block createMenu!");
                             return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(pos));
                         }
                     }, pos);

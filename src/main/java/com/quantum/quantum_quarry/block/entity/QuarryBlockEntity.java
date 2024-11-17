@@ -31,6 +31,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -90,7 +91,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                 if (blockEntity.manager.itemsToGive.size() <= 0) {
                     blockEntity.manager.startMining();
                     blockEntity.biomeText = blockEntity.manager.currentBiome.toString();
-                    LOGGER.info("Biome Set: {}", blockEntity.biomeText);
+                    blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
+                    //LOGGER.info("Biome Set: {}", blockEntity.biomeText);
                 }
                 BlockPos core = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ()); //ensure that we are using the core for validation
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
@@ -100,7 +102,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                         //blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
                         blockEntity.blocksMined = blockEntity.manager.minedBlocks;
-                        LOGGER.info("Blocks Mined: {}", blockEntity.blocksMined);
+                        blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
+                        //LOGGER.info("Mode: {} Blocks Mined: {} Biome: {}", blockEntity.mode, blockEntity.blocksMined, blockEntity.biomeText);
                         BlockPos[] storages = FindCore.findStorage(level, core);
                         for (BlockPos storage : storages) {
                             if (FindCore.insertItem(level, storage, item)) {
@@ -150,6 +153,9 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
             ContainerHelper.saveAllItems(tag, this.stacks, provider);
         }
         tag.put("energyStorage", energyStorage.serializeNBT(provider));
+        tag.putInt("mode", this.mode);
+        tag.putInt("mined", this.blocksMined);
+        tag.putString("BiomeText", this.biomeText);
     }
 
     @Override
@@ -162,16 +168,18 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         if (tag.get("energyStorage") instanceof IntTag intTag) {
             energyStorage.deserializeNBT(provider, intTag);
         }
-    }
-
-    public int getMode() {
-        return this.getMode();
+        this.mode = tag.getInt("mode");
+        this.blocksMined = tag.getInt("mined");
+        this.biomeText = tag.getString("BiomeText");
     }
 
     public void cycleMode() {
         this.mode++;
         if (this.mode > 2) {
             this.mode = 0;
+        }
+        if (!this.level.isClientSide) {
+            this.level.sendBlockUpdated(this.worldPosition, this.getBlockState(), this.getBlockState(), 3);
         }
     }
 
@@ -180,9 +188,18 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
+    @Override
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, Provider provider) {
+        LOGGER.info("Update Packet!");
+        super.onDataPacket(net, pkt, provider);
+        this.loadAdditional(pkt.getTag(), provider);
+    }
+
     @Override 
     public CompoundTag getUpdateTag(Provider lookupProvider) {
-        return this.saveWithFullMetadata(lookupProvider);
+        CompoundTag tag = super.getUpdateTag(lookupProvider);
+        this.saveAdditional(tag, lookupProvider);
+        return tag;
     }
 
     @Override
@@ -212,7 +229,6 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory) {
-        LOGGER.info("createMenu(id, inventory) : {}", this.worldPosition);
         return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(this.worldPosition));
     }
 
