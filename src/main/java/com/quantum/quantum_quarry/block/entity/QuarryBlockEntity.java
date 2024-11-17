@@ -25,6 +25,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.IntTag;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.network.chat.Component;
@@ -51,11 +53,14 @@ import io.netty.buffer.Unpooled;
 public class QuarryBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer {
     private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);
     private UUID owner;
-    public ChunkMiner manager;
+    private ChunkMiner manager;
     public static final int TANK_CAPACITY = 20000;
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
     private BlockPos location;
+
     public int mode;
+    public int blocksMined;
+    public String biomeText;
 
     private NonNullList<ItemStack> stacks = NonNullList.<ItemStack>withSize(2, ItemStack.EMPTY);
     private final SidedInvWrapper handler = new SidedInvWrapper(this, null);
@@ -64,6 +69,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         super(BlockEntities.QUARRY_BLOCK_ENTITY.get(), pos, state);
         this.location = pos;
         this.mode = 0;
+        this.blocksMined = 0;
+        this.biomeText = "";
         LOGGER.info("Quantum Miner created at position: {}", pos);    
     }
 
@@ -71,6 +78,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         this.owner = uuid;
         if (this.level instanceof ServerLevel serverLevel) {
             this.manager = new ChunkMiner(serverLevel); //null biome = all
+            LOGGER.info("Owner Set!");
+            LOGGER.info("Mined Blocks: {} Current Biome: {}", this.blocksMined, this.biomeText);
         }
     }
 
@@ -80,6 +89,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
             if (player != null) {
                 if (blockEntity.manager.itemsToGive.size() <= 0) {
                     blockEntity.manager.startMining();
+                    blockEntity.biomeText = blockEntity.manager.currentBiome.toString();
+                    LOGGER.info("Biome Set: {}", blockEntity.biomeText);
                 }
                 BlockPos core = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ()); //ensure that we are using the core for validation
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
@@ -88,6 +99,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                     if (item != null /* && blockEntity.energyStorage.extractEnergy(1, true) == 1 */) {
                         //blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
+                        blockEntity.blocksMined = blockEntity.manager.minedBlocks;
+                        LOGGER.info("Blocks Mined: {}", blockEntity.blocksMined);
                         BlockPos[] storages = FindCore.findStorage(level, core);
                         for (BlockPos storage : storages) {
                             if (FindCore.insertItem(level, storage, item)) {
