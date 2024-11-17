@@ -118,10 +118,12 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     @Override
     public void containerTick() {
         super.containerTick();
-        quarryCache = this.quarryEntity.mode;
+        quarryCache = this.quarryEntity.mode; //Only call per tick to not overwhelm the system
         if (this.quarryEntity.manager != null) {
             quarryBlocksMined = String.valueOf(this.quarryEntity.manager.minedBlocks);
             quarryBiomeType = this.quarryEntity.manager.currentBiome.toString();
+        } else {
+            LOGGER.info("quarry entity manager is undefined!");
         }
     }
 }
