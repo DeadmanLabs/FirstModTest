@@ -51,6 +51,7 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
 
     public ScreenMenu(int id, Inventory inv, FriendlyByteBuf extraData) {
         super(Menus.QUANTUM_MINER_SCREEN.get(), id);
+        LOGGER.info("Hello from ScreenMenu constructor!");
         this.entity = inv.player;
         this.world = inv.player.level();
         this.internal = new ItemStackHandler(2);
@@ -60,7 +61,7 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
             this.x = pos.getX();
             this.y = pos.getY();
             this.z = pos.getY();
-            access = ContainerLevelAccess.create(world, quarryPos);
+            access = ContainerLevelAccess.create(world, pos);
         }
         if (pos != null) {
             if (extraData.readableBytes() == 1) {

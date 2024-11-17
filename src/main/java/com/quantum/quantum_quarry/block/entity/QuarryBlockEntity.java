@@ -14,6 +14,7 @@ import net.minecraft.core.HolderLookup.Provider;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup.Provider;
+import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -54,7 +55,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     public static final int TANK_CAPACITY = 20000;
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
     private BlockPos location;
-    private int mode;
+    public int mode;
 
     private NonNullList<ItemStack> stacks = NonNullList.<ItemStack>withSize(2, ItemStack.EMPTY);
     private final SidedInvWrapper handler = new SidedInvWrapper(this, null);
@@ -132,34 +133,21 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     @Override
     protected void saveAdditional(CompoundTag tag, Provider provider) {
         super.saveAdditional(tag, provider);
-        if (this.owner != null) {
-            tag.put("Energy", energyStorage.serializeNBT(provider));
-            tag.putUUID("Owner", this.owner);
-            ListTag fluidList = new ListTag();
-            for (FluidStack fluid : fluidStorage) {
-                CompoundTag fluidTag = new CompoundTag();
-                fluid.save(provider, fluidTag);
-                fluidList.add(fluidTag);
-            }
-            tag.put("Fluids", fluidList);
+        if (!this.trySaveLootTable(tag)) {
+            ContainerHelper.saveAllItems(tag, this.stacks, provider);
         }
+        tag.put("energyStorage", energyStorage.serializeNBT(provider));
     }
 
     @Override
     protected void loadAdditional(CompoundTag tag, Provider provider) {
         super.loadAdditional(tag, provider);
-        if (tag.get("Energy") instanceof IntTag energyTag) {
-            energyStorage.deserializeNBT(provider, energyTag);
+        if (!this.tryLoadLootTable(tag)) {
+            this.stacks = NonNullList.withSize(this.getContainerSize(), ItemStack.EMPTY);
         }
-        if (tag.hasUUID("Owner")) {
-            this.owner = tag.getUUID("Owner");
-        }
-        if (tag.getList("Fluids", Tag.TAG_COMPOUND) instanceof ListTag fluidsTag) {
-            for (int i = 0; i < fluidsTag.size(); i++) {
-                CompoundTag fluidTag = fluidsTag.getCompound(i);
-                FluidStack fluid = FluidStack.parseOptional(provider, fluidTag);
-                fluidStorage.add(fluid);
-            }
+        ContainerHelper.loadAllItems(tag, this.stacks, provider);
+        if (tag.get("energyStorage") instanceof IntTag intTag) {
+            energyStorage.deserializeNBT(provider, intTag);
         }
     }
 
@@ -211,8 +199,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     @Override
     public AbstractContainerMenu createMenu(int id, Inventory inventory) {
-        LOGGER.info("createMenu(id, inventory)");
-        return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(location));
+        LOGGER.info("createMenu(id, inventory) : {}", this.worldPosition);
+        return new ScreenMenu(id, inventory, new FriendlyByteBuf(Unpooled.buffer()).writeBlockPos(this.worldPosition));
     }
 
     @Override
@@ -282,9 +270,5 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     public EnergyStorage getEnergyStorage() {
         return energyStorage;
-    }
-
-    public BlockPos getLocation() {
-        return location;
     }
 }

@@ -27,6 +27,10 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     private final QuarryBlockEntity quarryEntity;
     Button button_mode;
 
+    private int quarryCache;
+    private String quarryBlocksMined;
+    private String quarryBiomeType;
+
     public Screen(ScreenMenu container, Inventory inventory, Component text) {
         super(container, inventory, text);
         this.world = container.world;
@@ -37,6 +41,9 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         this.imageWidth = 176;
         this.imageHeight = 196;
         this.quarryEntity = (QuarryBlockEntity)container.getBoundEntity();
+        this.quarryCache = 0;
+        this.quarryBlocksMined = "";
+        this.quarryBiomeType = "";
     }
 
     private static final ResourceLocation texture = ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/quantum_miner_screen.png");
@@ -45,15 +52,15 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderBackground(guiGraphics, mouseX, mouseY, partialTicks);
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
-            switch (this.quarryEntity.getMode()) {
+            switch (quarryCache) {
                 case 0:
-                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstone_resize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstone_resize.png"), this.leftPos + 6, this.topPos + 59, 0, 0, 16, 16, 16, 16);
                     break;
                 case 1:
-                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/redstonetorchresize.png"), this.leftPos + 6, this.topPos + 59, 0, 0, 16, 16, 16, 16);
                     break;
                 case 2:
-                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 7, this.topPos + 45, 0, 0, 16, 16, 16, 16);
+                    guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 6, this.topPos + 59, 0, 0, 16, 16, 16, 16);
                     break;
             }
         this.renderTooltip(guiGraphics, mouseX, mouseY);
@@ -89,8 +96,8 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_blocks_mined"), 24, 28, -12829636, false);
         guiGraphics.drawString(this.font, Component.translatable("gui.quantum_quarry.quantum_miner_screen.label_biome"), 24, 39, -12829636, false);
         guiGraphics.drawString(this.font, Component.literal("X"), 93, 18, -12829636, false);
-        guiGraphics.drawString(this.font, Component.literal(this.quarryEntity == null ? "X" : String.valueOf(this.quarryEntity.manager.minedBlocks)), 93, 28, -12829636, false);
-        guiGraphics.drawString(this.font, Component.literal(this.quarryEntity == null ? "X" : this.quarryEntity.manager.currentBiome.toString()), 56, 39, -12829636, false);
+        guiGraphics.drawString(this.font, Component.literal(this.quarryBlocksMined), 93, 28, -12829636, false);
+        guiGraphics.drawString(this.font, Component.literal(this.quarryBiomeType), 56, 39, -12829636, false);
     }
 
     @Override
@@ -106,5 +113,15 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
         guistate.put("button:button_mode", button_mode);
         this.addRenderableWidget(button_mode);
+    }
+
+    @Override
+    public void containerTick() {
+        super.containerTick();
+        quarryCache = this.quarryEntity.mode;
+        if (this.quarryEntity.manager != null) {
+            quarryBlocksMined = String.valueOf(this.quarryEntity.manager.minedBlocks);
+            quarryBiomeType = this.quarryEntity.manager.currentBiome.toString();
+        }
     }
 }

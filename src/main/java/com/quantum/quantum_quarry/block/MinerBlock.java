@@ -50,34 +50,18 @@ public class MinerBlock extends Block {
 
     public MinerBlock(BlockBehaviour.Properties properties) {
         super(properties);
-        //this.registerDefaultState(this.defaultBlockState().setValue(AXIS, Direction.Axis.Y));
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.UP));
         this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, false));
     }
 
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!world.isClientSide) {
-            BlockPos quarry = FindCore.execute(world, pos.getX(), pos.getY(), pos.getZ());
-            if (quarry != null) {
-                boolean isQuarryValid = FindCore.validateStructure(world, quarry);
-                if (isQuarryValid) {
-                    BlockEntity blockEntity = world.getBlockEntity(quarry);
-                    if (player instanceof ServerPlayer serverPlayer && blockEntity instanceof QuarryBlockEntity quarryEntity) {
-                        serverPlayer.openMenu(quarryEntity);
-                    } else {
-                        throw new IllegalStateException("Our named container provider is missing!");
-                    }
-                } else {
-                    if (!world.isClientSide() && world.getServer() != null) {
-                        player.displayClientMessage(Component.literal("The Machine is Incomplete!"), true);
-                    } else {
-                        LOGGER.warn("Machine isnt valid but we aren't client side!");
-                    }
-                }
-            } else {
-                LOGGER.warn("We cant find a quarry!");
-            }
+        LOGGER.info("Hello from Miner Block Use!");
+        BlockPos quarry = FindCore.execute(world, pos.getX(), pos.getY(), pos.getZ());
+        if (quarry != null && world.getBlockState(quarry).getBlock() instanceof QuarryBlock quarryBlock) {
+            quarryBlock.useWithoutItem(state, world, quarry, player, hit);
+        } else {
+            LOGGER.info("Failure to find quarry block! {}", (quarry != null ? "Quarry Not Null!" : "Quarry Null!"));
         }
         return InteractionResult.sidedSuccess(world.isClientSide);
     }
