@@ -18,6 +18,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
+import net.neoforged.neoforge.network.PacketDistributor;
+
 public class Screen extends AbstractContainerScreen<ScreenMenu> {
     private static final Logger LOGGER = LoggerFactory.getLogger(Screen.class);
     private final static HashMap<String, Object> guistate = ScreenMenu.guistate;
@@ -110,6 +112,7 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
         super.init();
         button_mode = Button.builder(Component.translatable("gui.quantum_quarry.quantum_miner_screen.button_empty"), e -> {
             this.quarryEntity.cycleMode();
+            PacketDistributor.sendToServer(new ChangeModeRequest(this.world, this.quarryEntity.mode));
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();
         guistate.put("button:button_mode", button_mode);
         this.addRenderableWidget(button_mode);
