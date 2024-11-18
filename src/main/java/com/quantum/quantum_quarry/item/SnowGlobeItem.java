@@ -20,6 +20,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
 
+import net.neoforged.neoforge.network.PacketDistributor;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
@@ -61,6 +63,17 @@ public class SnowGlobeItem extends Item {
             visitedBiomes.add(biomeKey);
             stack.set(DataComponents.VISITED_BIOMES.get(), visitedBiomes);
             player.displayClientMessage(Component.literal("Visited new biome: " + biomeKey.location() + " / " + visitedBiomes.size()), true);
+            HashSet<ResourceLocation> resourceLocations = new HashSet<>();
+            for (ResourceKey<Biome> biomeResourceKey : visitedBiomes) {
+                resourceLocations.add(biomeResourceKey.location());
+            }
+            if (player instanceof ServerPlayer serverPlayer) {
+                /*
+                SyncVisitedBiomesPayload pkt = new SyncVisitedBiomesPayload(new HashSet<ResourceLocation>(resourceLocations));
+                PacketDistributor.sendToPlayer(serverPlayer, pkt);
+                */
+                sendSyncPacket(serverPlayer, visitedBiomes);
+            }
             if (visitedBiomes.size() >= REQUIRED_BIOMES) {
                 ItemStack magicSnowGlobe = new ItemStack(ModItems.MAGIC_SNOW_GLOBE.get());
                 player.getInventory().removeItem(stack);

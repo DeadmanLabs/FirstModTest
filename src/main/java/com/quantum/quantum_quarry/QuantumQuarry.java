@@ -35,6 +35,7 @@ import com.quantum.quantum_quarry.init.ModItems;
 import com.quantum.quantum_quarry.init.BlockEntities;
 import com.quantum.quantum_quarry.init.DataComponents;
 import com.quantum.quantum_quarry.init.Screens;
+import com.quantum.quantum_quarry.init.Network;
 import com.quantum.quantum_quarry.init.Menus;
 import com.quantum.quantum_quarry.init.Tabs;
 

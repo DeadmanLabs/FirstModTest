@@ -57,7 +57,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     private ChunkMiner manager;
     public static final int TANK_CAPACITY = 20000;
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
-    private BlockPos location;
+    public BlockPos location;
 
     public int mode;
     public int blocksMined;
