@@ -37,6 +37,7 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 
 import net.neoforged.neoforge.fluids.FluidStack;
 
@@ -49,6 +50,7 @@ public class ChunkMiner {
     public final Queue<ItemStack> itemsToGive = new LinkedList<>();
     public final Queue<FluidStack> fluidsToGive = new LinkedList<>();
     public ResourceKey<Biome> currentBiome = null;
+    public Holder<Biome> currentHolder = null;
     public DimensionType dimension = null;
     public int minedBlocks = 0;
     private ChunkPos currentPos = null;
@@ -97,6 +99,7 @@ public class ChunkMiner {
             this.currentPos = pos;
             this.dimension = targetLevel.dimensionType();
             this.currentBiome = getBiomeOfChunk(targetLevel, chunkAccess.getPos());
+            this.currentHolder = getBiomeHolderOfChunk(targetLevel, chunkAccess.getPos());
             return (LevelChunk)chunkAccess;
         } else {
             LOGGER.warn("Failed to cast LevelChunk to chunkAccess!");
@@ -200,11 +203,27 @@ public class ChunkMiner {
         return dimensions.get(random.nextInt(dimensions.size()));
     }
 
+    public String getHumanReadableBiomeName() {
+        if (this.level != null && this.currentBiome != null) {
+            Registry<Biome> biomeRegistry = this.level.registryAccess().registryOrThrow(Registries.BIOME);
+            Holder<Biome> biomeHolder = biomeRegistry.getHolder(this.currentBiome).orElse(null);
+            if (biomeHolder != null && biomeHolder.isBound()) {
+                ResourceLocation biomeId = biomeHolder.unwrapKey().orElse(null).location();
+                return Component.translatable("biome." + biomeId.getNamespace() + "." + biomeId.getPath()).getString();
+            }
+        }
+        return "Unknown Biome";
+    }
+
     public static ResourceKey<Biome> getBiomeOfChunk(ServerLevel level, ChunkPos pos) {
         // Estimated
         LevelChunk chunk = level.getChunk(pos.x, pos.z);
         Holder<Biome> biome = chunk.getNoiseBiome(((pos.x << 4) + 8) >> 2, 0, ((pos.z << 4) + 8) >> 2);
         ResourceKey<Biome> biomeKey = biome.unwrapKey().orElse(null);
         return biomeKey;
+    }
+
+    public static Holder<Biome> getBiomeHolderOfChunk(ServerLevel level, ChunkPos pos) {
+        return level.getChunk(pos.x, pos.z).getNoiseBiome(((pos.x << 4) + 8) >> 2, 0, ((pos.z << 4) + 8) >> 2);
     }
 }

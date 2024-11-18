@@ -72,15 +72,12 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         this.mode = 0;
         this.blocksMined = 0;
         this.biomeText = "";
-        LOGGER.info("Quantum Miner created at position: {}", pos);    
     }
 
     public void setOwner(UUID uuid) {
         this.owner = uuid;
         if (this.level instanceof ServerLevel serverLevel) {
             this.manager = new ChunkMiner(serverLevel); //null biome = all
-            LOGGER.info("Owner Set!");
-            LOGGER.info("Mined Blocks: {} Current Biome: {}", this.blocksMined, this.biomeText);
         }
     }
 
@@ -90,7 +87,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
             if (player != null) {
                 if (blockEntity.manager.itemsToGive.size() <= 0) {
                     blockEntity.manager.startMining();
-                    blockEntity.biomeText = blockEntity.manager.currentBiome.toString();
+                    blockEntity.biomeText = blockEntity.manager.getHumanReadableBiomeName(); // Mod
                     blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
                     //LOGGER.info("Biome Set: {}", blockEntity.biomeText);
                 }
@@ -190,7 +187,6 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     @Override
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, Provider provider) {
-        LOGGER.info("Update Packet!");
         super.onDataPacket(net, pkt, provider);
         this.loadAdditional(pkt.getTag(), provider);
     }

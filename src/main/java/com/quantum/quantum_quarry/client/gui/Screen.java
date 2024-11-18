@@ -118,7 +118,6 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     @Override
     public void containerTick() {
         super.containerTick();
-        LOGGER.info("Screen Mode {} Screen Blocks Mined {} Screen Biome {}", this.quarryEntity.mode, this.quarryEntity.blocksMined, this.quarryEntity.biomeText);
         this.quarryCache = this.quarryEntity.mode; //Only call per tick to not overwhelm the system
         this.quarryBlocksMined = String.valueOf(this.quarryEntity.blocksMined);
         this.quarryBiomeType = this.quarryEntity.biomeText;
