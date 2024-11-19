@@ -95,8 +95,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
                     ItemStack item = blockEntity.manager.itemsToGive.poll();
                     FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
-                    if (item != null /* && blockEntity.energyStorage.extractEnergy(1, true) == 1 */) {
-                        //blockEntity.energyStorage.extractEnergy(1, false);
+                    if (item != null && evaluateRedstone(blockEntity.mode, true) && blockEntity.energyStorage.extractEnergy(1, true) == 1 ) {
+                        blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
                         blockEntity.blocksMined = blockEntity.manager.minedBlocks;
                         blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
@@ -295,5 +295,18 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
 
     public EnergyStorage getEnergyStorage() {
         return energyStorage;
+    }
+
+    private static boolean evaluateRedstone(int mode, boolean isReceiving) {
+        switch (mode) {
+            case 0:
+                return true;
+            case 1:
+                return isReceiving;
+            case 2:
+                return !isReceiving;
+            default:
+                return false;
+        }
     }
 }
