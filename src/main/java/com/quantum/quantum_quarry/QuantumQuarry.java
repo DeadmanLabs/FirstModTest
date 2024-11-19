@@ -56,29 +56,6 @@ public class QuantumQuarry
     // Creates a Deferred Register to hold Block Entities which will all be registered under the "examplemod" namespace
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = BlockEntities.REGISTRY;
 
-    public static final DeferredBlock<TickingBlock> TICKING_BLOCK = BLOCKS.register(
-        "ticking_block",
-        () -> new TickingBlock(BlockBehaviour.Properties.of().mapColor(MapColor.STONE))
-    );
-    public static final DeferredItem<BlockItem> TICKING_BLOCK_ITEM = ITEMS.register(
-        "ticking_block",
-        () -> new BlockItem(TICKING_BLOCK.get(), new Item.Properties())
-    );
-    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<TickingBlockEntity>> TICKING_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register(
-        "ticking_block_entity",
-        () -> BlockEntityType.Builder.of(TickingBlockEntity::new, TICKING_BLOCK.get()).build(null)
-    );
-
-
-    // Creates a creative tab with the id "examplemod:example_tab" for the example item, that is placed after the combat tab
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> QUANTUM_TAB = CREATIVE_MODE_TABS.register("quantum_tab", () -> CreativeModeTab.builder()
-            .title(Component.translatable("itemGroup.quantum_quarry")) //The language key for the title of your CreativeModeTab
-            .withTabsBefore(CreativeModeTabs.COMBAT)
-            .icon(() -> TICKING_BLOCK_ITEM.get().getDefaultInstance())
-            .displayItems((parameters, output) -> {
-                output.accept(TICKING_BLOCK_ITEM.get());
-            }).build());
-
     // The constructor for the mod class is the first code that is run when your mod is loaded.
     // FML will recognize some parameter types like IEventBus or ModContainer and pass them in automatically.
     public QuantumQuarry(IEventBus modEventBus, ModContainer modContainer)
