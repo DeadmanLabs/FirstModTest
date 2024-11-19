@@ -25,12 +25,14 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 import java.util.HashSet;
 import java.util.stream.Collectors;
 
 import com.quantum.quantum_quarry.init.DataComponents;
 import com.quantum.quantum_quarry.init.ModItems;
 import com.quantum.quantum_quarry.packets.SyncVisitedBiomesPayload;
+import com.quantum.quantum_quarry.item.data.VisitedBiomes;
 
 public class SnowGlobeItem extends Item {
     private static final int REQUIRED_BIOMES = 7;
@@ -52,19 +54,20 @@ public class SnowGlobeItem extends Item {
         BlockPos pos = player.blockPosition();
         Biome biome = world.getBiome(pos).value();
         ResourceKey<Biome> biomeKey = world.registryAccess().registryOrThrow(Registries.BIOME).getResourceKey(biome).orElse(null);
-        Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
+        VisitedBiomes visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
         if (biomeKey == null) {
             return;
         }
-        if (visitedBiomes == null || visitedBiomes.isEmpty()) {
-            visitedBiomes = stack.set(DataComponents.VISITED_BIOMES.get(), new HashSet<>());
+        if (visitedBiomes == null || visitedBiomes.biomes().isEmpty()) {
+            VisitedBiomes newVisitedBiomes = new VisitedBiomes(UUID.randomUUID(), new HashSet<>());
+            visitedBiomes = stack.set(DataComponents.VISITED_BIOMES.get(), newVisitedBiomes);
         }
-        if (visitedBiomes != null && !visitedBiomes.contains(biomeKey)) {
-            visitedBiomes.add(biomeKey);
+        if (visitedBiomes != null && !visitedBiomes.biomes().contains(biomeKey)) {
+            visitedBiomes.biomes().add(biomeKey);
             stack.set(DataComponents.VISITED_BIOMES.get(), visitedBiomes);
-            player.displayClientMessage(Component.literal("Visited new biome: " + biomeKey.location() + " / " + visitedBiomes.size()), true);
+            player.displayClientMessage(Component.literal("Visited new biome: " + biomeKey.location() + " / " + visitedBiomes.biomes().size()), true);
             HashSet<ResourceLocation> resourceLocations = new HashSet<>();
-            for (ResourceKey<Biome> biomeResourceKey : visitedBiomes) {
+            for (ResourceKey<Biome> biomeResourceKey : visitedBiomes.biomes()) {
                 resourceLocations.add(biomeResourceKey.location());
             }
             if (player instanceof ServerPlayer serverPlayer) {
@@ -74,7 +77,7 @@ public class SnowGlobeItem extends Item {
                 */
                 sendSyncPacket(serverPlayer, visitedBiomes);
             }
-            if (visitedBiomes.size() >= REQUIRED_BIOMES) {
+            if (visitedBiomes.biomes().size() >= REQUIRED_BIOMES) {
                 ItemStack magicSnowGlobe = new ItemStack(ModItems.MAGIC_SNOW_GLOBE.get());
                 player.getInventory().removeItem(stack);
                 player.getInventory().add(magicSnowGlobe);
@@ -90,15 +93,16 @@ public class SnowGlobeItem extends Item {
         if (biomeKey == null) {
             return;
         }
-        Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
+        VisitedBiomes visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
         if (visitedBiomes == null) {
-            visitedBiomes = new HashSet<>();
+            VisitedBiomes newVisitedBiomes = new VisitedBiomes(UUID.randomUUID(), new HashSet<>());
+            visitedBiomes = stack.set(DataComponents.VISITED_BIOMES.get(), newVisitedBiomes);
         }
-        if (visitedBiomes != null && !visitedBiomes.contains(biomeKey)) {
-
+        if (visitedBiomes != null && !visitedBiomes.biomes().contains(biomeKey)) {
+            visitedBiomes.biomes().add(biomeKey);
             stack.set(DataComponents.VISITED_BIOMES.get(), visitedBiomes);
-            player.displayClientMessage(Component.literal("Visited new biome: " + biomeKey.location() + " / " + visitedBiomes.size()), true);
-            if (visitedBiomes.size() >= REQUIRED_BIOMES) {
+            player.displayClientMessage(Component.literal("Visited new biome: " + biomeKey.location() + " / " + visitedBiomes.biomes().size()), true);
+            if (visitedBiomes.biomes().size() >= REQUIRED_BIOMES) {
                 ItemStack magicSnowGlobe = new ItemStack(ModItems.MAGIC_SNOW_GLOBE.get());
                 player.getInventory().removeItem(stack);
                 player.getInventory().add(magicSnowGlobe);
@@ -107,21 +111,21 @@ public class SnowGlobeItem extends Item {
         }
     }
 
-    private void sendSyncPacket(ServerPlayer player, Set<ResourceKey<Biome>> visitedBiomes) {
-        Set<ResourceLocation> biomeLocations = visitedBiomes.stream()
+    private void sendSyncPacket(ServerPlayer player, VisitedBiomes visitedBiomes) {
+        Set<ResourceLocation> biomeLocations = visitedBiomes.biomes().stream()
             .map(ResourceKey::location)
             .collect(Collectors.toSet());
-        SyncVisitedBiomesPayload payload = new SyncVisitedBiomesPayload(biomeLocations);
+        SyncVisitedBiomesPayload payload = new SyncVisitedBiomesPayload(visitedBiomes.id(), biomeLocations);
         player.connection.send(new ClientboundCustomPayloadPacket(payload));
     }
 
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
-        Set<ResourceKey<Biome>> visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
+        VisitedBiomes visitedBiomes = stack.get(DataComponents.VISITED_BIOMES.get());
         if (visitedBiomes != null) {
-            tooltip.add(Component.literal("Visited Biomes (" + visitedBiomes.size() + "):"));
-            for (ResourceKey<Biome> biome : visitedBiomes) {
+            tooltip.add(Component.literal("Visited Biomes (" + visitedBiomes.biomes().size() + "):"));
+            for (ResourceKey<Biome> biome : visitedBiomes.biomes()) {
                 tooltip.add(Component.literal("- " + biome.location()));
             }
         } else {
