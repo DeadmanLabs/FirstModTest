@@ -15,6 +15,7 @@ import net.neoforged.fml.common.EventBusSubscriber;
 
 import com.quantum.quantum_quarry.packets.ChangeModeRequest;
 import com.quantum.quantum_quarry.packets.SyncVisitedBiomesPayload;
+import com.quantum.quantum_quarry.packets.ChangeModeResponse;
 import com.quantum.quantum_quarry.item.SnowGlobeItem;
 
 import org.slf4j.Logger;
@@ -48,11 +49,27 @@ public class Network {
                 if (player != null) {
                     LOGGER.info("Quarry Mode Cycle Packet!");
                     BlockEntity blockEntity = player.level().getBlockEntity(payload.pos());
-                    if (blockEntity instanceof QuarryBlockEntity quarryEntity) {
+                    if (blockEntity instanceof QuarryBlockEntity quarryEntity && player instanceof ServerPlayer serverPlayer) {
                         quarryEntity.cycleMode();
+                        ChangeModeResponse pkt = new ChangeModeResponse(payload.pos(), quarryEntity.mode);
+                        serverPlayer.connection.send(new ClientboundCustomPayloadPacket(pkt));
                     }
                 }
             }
         );
+        networkThreadRegistrar.playToClient(
+            ChangeModeResponse.TYPE,
+            ChangeModeResponse.STREAM_CODEC,
+            (payload, context) -> {
+                Player player = context.player();
+                if (player != null) {
+                    LOGGER.info("Quarry Mode Set Packet!");
+                    BlockEntity blockEntity = player.level().getBlockEntity(payload.pos());
+                    if (blockEntity instanceof QuarryBlockEntity quarryEntity) {
+                        quarryEntity.mode = payload.mode();
+                    }
+                }
+            }
+        )
     }
 }
