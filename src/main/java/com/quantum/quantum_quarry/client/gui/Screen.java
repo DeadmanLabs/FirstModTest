@@ -67,6 +67,19 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
                     guiGraphics.blit(ResourceLocation.fromNamespaceAndPath("quantum_quarry", "textures/screens/unlitredstonetorchresize.png"), this.leftPos + 6, this.topPos + 59, 0, 0, 16, 16, 16, 16);
                     break;
             }
+        if (button_mode.isHovered()) {
+            switch (quarryCache) {
+                case 0:
+                    this.setTooltipForNextRenderPass(Component.literal("Always On"));
+                    break;
+                case 1:
+                    this.setTooltipForNextRenderPass(Component.literal("Redstone High"));
+                    break;
+                case 2:
+                    this.setTooltipForNextRenderPass(Component.literal("Redstone Low"));
+                    break;
+            }
+        }
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 
@@ -113,7 +126,7 @@ public class Screen extends AbstractContainerScreen<ScreenMenu> {
     public void init() {
         super.init();
         button_mode = Button.builder(Component.translatable("gui.quantum_quarry.quantum_miner_screen.button_empty"), e -> {
-            LOGGER.info("Generating payload with {} position!", this.quarryEntity.location);
+            LOGGER.info("Sending packet with location: {}", this.quarryEntity.location);
             ChangeModeRequest pkt = new ChangeModeRequest(this.quarryEntity.location);
             PacketDistributor.sendToServer(pkt);
         }).bounds(this.leftPos + 4, this.topPos + 57, 20, 20).build();

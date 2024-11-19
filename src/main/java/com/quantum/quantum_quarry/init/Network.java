@@ -1,7 +1,9 @@
 package com.quantum.quantum_quarry.init;
 
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
@@ -46,7 +48,6 @@ public class Network {
             (payload, context) -> {
                 Player player = context.player();
                 if (player != null) {
-                    LOGGER.info("Visited Biomes Sync Packet! ID: {}", payload.id());
                     UUID itemId = payload.id();
                     Set<ResourceKey<Biome>> updatedBiomes = payload.visitedBiomes().stream()
                         .map(location -> ResourceKey.create(Registries.BIOME, location))
@@ -57,7 +58,6 @@ public class Network {
                             if (visitedBiomes != null && visitedBiomes.id().equals(itemId)) {
                                 VisitedBiomes updatedVisitedBiomes = new VisitedBiomes(itemId, updatedBiomes);
                                 stack.set(DataComponents.VISITED_BIOMES.get(), updatedVisitedBiomes);
-                                LOGGER.info("Updated SnowGlobeItem with ID: {} with new visited biomes.", itemId);
                                 break;
                             }
                         }
@@ -72,17 +72,21 @@ public class Network {
             (payload, context) -> {
                 Player player = context.player();
                 if (player != null) {
-                    LOGGER.info("Quarry Mode Cycle Packet!");
-                    BlockEntity blockEntity = player.level().getBlockEntity(payload.pos());
-                    if (blockEntity instanceof QuarryBlockEntity quarryEntity) {
-                        quarryEntity.cycleMode();
-                        if (player instanceof ServerPlayer serverPlayer) {
-                            ChangeModeResponse pkt = new ChangeModeResponse(payload.pos(), quarryEntity.mode);
-                            serverPlayer.connection.send(new ClientboundCustomPayloadPacket(pkt));
-                        } else {
-                            LOGGER.warn("Player is not on the server!");
+                    context.enqueueWork(() -> {
+                        BlockPos pos = payload.pos();
+                        Level world = player.level();
+
+                        if (world.isLoaded(pos)) {
+                            BlockEntity blockEntity = world.getBlockEntity(pos);
+                            if (blockEntity instanceof QuarryBlockEntity quarryEntity) {
+                                quarryEntity.cycleMode();
+                                if (player instanceof ServerPlayer serverPlayer) {
+                                    ChangeModeResponse pkt = new ChangeModeResponse(pos, quarryEntity.mode);
+                                    serverPlayer.connection.send(new ClientboundCustomPayloadPacket(pkt));
+                                }
+                            }
                         }
-                    }
+                    });
                 }
             }
         );
@@ -90,7 +94,6 @@ public class Network {
             ChangeModeResponse.TYPE,
             ChangeModeResponse.STREAM_CODEC,
             (payload, context) -> {
-                LOGGER.info("Quarry Mode Set Packet!");
                 Player player = context.player();
                 if (player != null) {
                     BlockEntity blockEntity = player.level().getBlockEntity(payload.pos());
