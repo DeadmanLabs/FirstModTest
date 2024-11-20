@@ -122,6 +122,7 @@ public class QuarryBlock extends Block implements EntityBlock {
             if (blockEntity instanceof QuarryBlockEntity quarryEntity) {
                 Containers.dropContents(level, pos, quarryEntity);
                 level.updateNeighbourForOutputSignal(pos, this);
+                level.invalidateCapabilities(pos);
             }
             super.onRemove(state, level, pos, newState, isMoving);
         }

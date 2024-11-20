@@ -42,6 +42,7 @@ import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
+import net.neoforged.neoforge.capabilities.BlockCapability;
 
 //import com.quantum.quantum_quarry.helpers.ChunkMiner;
 import com.quantum.quantum_quarry.helpers.AlternateDimension.ChunkMiner;
@@ -95,7 +96,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
                     ItemStack item = blockEntity.manager.itemsToGive.poll();
                     FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
-                    if (item != null && evaluateRedstone(blockEntity.mode, true) && blockEntity.energyStorage.extractEnergy(1, true) == 1 ) {
+                    if (item != null && blockEntity.energyStorage.extractEnergy(1, true) == 1) {
                         blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
                         blockEntity.blocksMined = blockEntity.manager.minedBlocks;
@@ -118,7 +119,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                             }
                         }
                     } else {
-                        LOGGER.info("stack is empty!");
+                        LOGGER.info("stack is empty! FE: {} Simulated Extract: {}", blockEntity.energyStorage.getEnergyStored(), blockEntity.energyStorage.extractEnergy(1, true));
                     }
                 } else {
                     //LOGGER.info("Miner structure is not valid!");
@@ -271,7 +272,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         return handler;
     }
 
-    private final EnergyStorage energyStorage = new EnergyStorage(200000, 200000, 0, 0) {
+    private final EnergyStorage energyStorage = new EnergyStorage(200000, 200000, 200000, 0) {
         @Override
         public int receiveEnergy(int maxReceive, boolean simulate) {
             int retval = super.receiveEnergy(maxReceive, simulate);

@@ -36,13 +36,14 @@ import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
 import com.quantum.quantum_quarry.init.BlockEntities;
 import com.quantum.quantum_quarry.procedures.FindCore;
 import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
+import com.quantum.quantum_quarry.block.entity.MinerBlockEntity;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.buffer.Unpooled;
 
-public class MinerBlock extends Block {
+public class MinerBlock extends Block implements EntityBlock {
     public static final Logger LOGGER = LoggerFactory.getLogger(MinerBlock.class);
     public static final DirectionProperty FACING = BlockStateProperties.FACING;
     public static final BooleanProperty POWERED = BooleanProperty.create("powered");
@@ -52,6 +53,31 @@ public class MinerBlock extends Block {
         super(properties);
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.UP));
         this.registerDefaultState(this.stateDefinition.any().setValue(POWERED, false));
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        return new MinerBlockEntity(pos, state);
+    }
+
+    @Override
+    public void onPlace(BlockState state, Level level, BlockPos pos, BlockState oldState, boolean isMoving) {
+        super.onPlace(state, level, pos, oldState, isMoving);
+        if (!level.isClientSide) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof MinerBlockEntity minerEntity) {
+                for (Direction direction : Direction.values()) {
+                    BlockPos adjacentPos = pos.relative(direction);
+                    BlockEntity adjacentEntity = level.getBlockEntity(adjacentPos);
+                    if (adjacentEntity instanceof QuarryBlockEntity) {
+                        minerEntity.setLinkedQuarryPos(adjacentPos);
+                        LOGGER.info("Set Linked Quarry to {}", minerEntity.getLinkedQuarryPos());
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -82,5 +108,25 @@ public class MinerBlock extends Block {
             level.setBlock(pos, state.setValue(POWERED, isPowered), 3);
             
         }
+        if (!level.isClientSide) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof MinerBlockEntity minerEntity) {
+                for (Direction direction : Direction.values()) {
+                    BlockPos adjacentPos = pos.relative(direction);
+                    BlockEntity adjacentEntity = level.getBlockEntity(adjacentPos);
+                    if (adjacentEntity instanceof QuarryBlockEntity) {
+                        minerEntity.setLinkedQuarryPos(adjacentPos);
+                        LOGGER.info("Set Linked Quarry to {}", minerEntity.getLinkedQuarryPos());
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
+        super.onRemove(state, level, pos, newState, movedByPiston);
+        level.invalidateCapabilities(pos);
     }
 }
