@@ -8,6 +8,7 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
 import com.quantum.quantum_quarry.block.entity.QuarryBlockEntity;
+import com.quantum.quantum_quarry.block.entity.MinerBlockEntity;
 import com.quantum.quantum_quarry.QuantumQuarry;
 
 public class BlockEntities {
@@ -15,5 +16,9 @@ public class BlockEntities {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<QuarryBlockEntity>> QUARRY_BLOCK_ENTITY = REGISTRY.register(
         "quarry_block_entity",
         () -> BlockEntityType.Builder.of(QuarryBlockEntity::new, ModBlocks.QUARRY.get()).build(null)
+    );
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MinerBlockEntity>> MINER_BLOCK_ENTITY = REGISTRY.register(
+        "miner_block_entity",
+        () -> BlockEntityType.Builder.of(MinerBlockEntity::new, ModBlocks.MINER.get()).build(null)
     );
 }
