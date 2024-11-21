@@ -41,6 +41,9 @@ import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
 
+import java.util.Map;
+import java.util.HashMap;
+
 public class QuarryBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer {
     private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);
     private UUID owner;
@@ -87,14 +90,13 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                     ItemStack item = blockEntity.manager.itemsToGive.poll();
                     FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
                     if (item != null && 
-                        evaluateRedstone(blockEntity.mode, state.getValue(QuarryBlock.POWERED)) && 
+                        evaluateRedstone(blockEntity) && 
                         blockEntity.energyStorage.extractEnergy(1, true) == 1
                     ) {
                         blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
                         blockEntity.blocksMined = blockEntity.manager.minedBlocks;
                         blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
-                        //LOGGER.info("Mode: {} Blocks Mined: {} Biome: {}", blockEntity.mode, blockEntity.blocksMined, blockEntity.biomeText);
                         BlockPos[] storages = FindCore.findStorage(level, core);
                         for (BlockPos storage : storages) {
                             if (FindCore.insertItem(level, storage, item)) {
@@ -111,14 +113,11 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                                 //If we failed to insert all the fluid, too bad!
                             }
                         }
-                    } else {
-                        LOGGER.info("stack is empty! FE: {} Simulated Extract: {}", blockEntity.energyStorage.getEnergyStored(), blockEntity.energyStorage.extractEnergy(1, true));
                     }
-                } else {
-                    //LOGGER.info("Miner structure is not valid!");
+                    else {
+                        LOGGER.warn("No Stack, Redstone is off, or Not enough energy!");
+                    }
                 }
-            } else {
-                LOGGER.warn("Owner is null!");
             }
         }
     }
@@ -291,21 +290,22 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         return energyStorage;
     }
 
-    private static boolean evaluateRedstone(int mode, boolean isReceiving) {
+    private static boolean evaluateRedstone(QuarryBlockEntity entity) {
         //LOGGER.info("Checking Mode {} with signal {}", mode, isReceiving);
-        switch (mode) {
+        switch (entity.mode) {
             case 0:
                 return true;
             case 1:
-                return isReceiving;
+                return entity.minerRedstoneStates.values().stream().anyMatch(Boolean::booleanValue);
             case 2:
-                return !isReceiving;
+                return !(entity.minerRedstoneStates.values().stream().anyMatch(Boolean::booleanValue));
             default:
                 return false;
         }
     }
 
     public void updateMinerState(BlockPos minerPos, boolean isPowered) {
+        LOGGER.info("Miner @ {} Changed Redstone State to Powered = {}", minerPos, isPowered);
         minerRedstoneStates.put(minerPos, isPowered);
     }
 }

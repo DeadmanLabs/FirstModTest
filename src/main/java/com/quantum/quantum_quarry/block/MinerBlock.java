@@ -110,7 +110,7 @@ public class MinerBlock extends Block implements EntityBlock {
             LOGGER.info("Miner Block Redstone State Changed at {}: Powered = {}", pos, isPowered);
             level.updateNeighborsAt(pos, this);
             BlockPos quarry = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ());
-            if (quarry != null && world.getBlock(quarry) instanceof QuarryBlock quarryBlock) {
+            if (quarry != null && level.getBlockState(quarry).getBlock() instanceof QuarryBlock quarryBlock) {
                 quarryBlock.notifyQuarryBlock(level, quarry, isPowered);
             }
         }
@@ -134,16 +134,6 @@ public class MinerBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         super.onRemove(state, level, pos, newState, movedByPiston);
         level.invalidateCapabilities(pos);
-    }
-
-    @Override
-    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
-        return 15;
-    }
-
-    @Override
-    public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
-        return 15;
     }
 
     @Override
