@@ -3,55 +3,43 @@ package com.quantum.quantum_quarry.block.entity;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.UUID;
-import javax.annotation.Nullable;
 import java.util.stream.IntStream;
+
+import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.quantum.quantum_quarry.block.QuarryBlock;
+import com.quantum.quantum_quarry.helpers.AlternateDimension.ChunkMiner;
+import com.quantum.quantum_quarry.init.BlockEntities;
+import com.quantum.quantum_quarry.procedures.FindCore;
+import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
+
+import io.netty.buffer.Unpooled;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup.Provider;
-import net.minecraft.core.NonNullList;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup.Provider;
-import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.WorldlyContainer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.nbt.IntTag;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.network.Connection;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.Connection;
-import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
-
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.energy.EnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.items.wrapper.SidedInvWrapper;
-import net.neoforged.neoforge.capabilities.BlockCapability;
-
-//import com.quantum.quantum_quarry.helpers.ChunkMiner;
-import com.quantum.quantum_quarry.helpers.AlternateDimension.ChunkMiner;
-import com.quantum.quantum_quarry.init.BlockEntities;
-import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
-import com.quantum.quantum_quarry.procedures.FindCore;
-import com.quantum.quantum_quarry.block.QuarryBlock;
-
-import io.netty.buffer.Unpooled;
 
 public class QuarryBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer {
     private static final Logger LOGGER = LoggerFactory.getLogger(QuarryBlockEntity.class);
@@ -60,7 +48,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     public static final int TANK_CAPACITY = 20000;
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
     public BlockPos location;
-    private boolean isRedstoneReceiving;
+    private final Map<BlockPos, Boolean> minerRedstoneStates = new HashMap<>();
 
     public int mode;
     public int blocksMined;
@@ -85,7 +73,6 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, QuarryBlockEntity blockEntity) {
-        LOGGER.info("Quarry Redstone State: Powered = {}", state.getValue(QuarryBlock.POWERED));
         if (!level.isClientSide && blockEntity.owner != null && level instanceof ServerLevel serverLevel && blockEntity.manager != null) {
             Player player = serverLevel.getPlayerByUUID(blockEntity.owner);
             if (player != null) {
@@ -99,7 +86,10 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
                     ItemStack item = blockEntity.manager.itemsToGive.poll();
                     FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
-                    if (item != null && evaluateRedstone(blockEntity.mode, state.getValue(QuarryBlock.POWERED)) && blockEntity.energyStorage.extractEnergy(1, true) == 1) {
+                    if (item != null && 
+                        evaluateRedstone(blockEntity.mode, state.getValue(QuarryBlock.POWERED)) && 
+                        blockEntity.energyStorage.extractEnergy(1, true) == 1
+                    ) {
                         blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
                         blockEntity.blocksMined = blockEntity.manager.minedBlocks;
@@ -302,6 +292,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     }
 
     private static boolean evaluateRedstone(int mode, boolean isReceiving) {
+        //LOGGER.info("Checking Mode {} with signal {}", mode, isReceiving);
         switch (mode) {
             case 0:
                 return true;
@@ -312,5 +303,9 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
             default:
                 return false;
         }
+    }
+
+    public void updateMinerState(BlockPos minerPos, boolean isPowered) {
+        minerRedstoneStates.put(minerPos, isPowered);
     }
 }

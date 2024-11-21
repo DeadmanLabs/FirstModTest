@@ -109,6 +109,10 @@ public class MinerBlock extends Block implements EntityBlock {
         if (!level.isClientSide) {
             LOGGER.info("Miner Block Redstone State Changed at {}: Powered = {}", pos, isPowered);
             level.updateNeighborsAt(pos, this);
+            BlockPos quarry = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ());
+            if (quarry != null && world.getBlock(quarry) instanceof QuarryBlock quarryBlock) {
+                quarryBlock.notifyQuarryBlock(level, quarry, isPowered);
+            }
         }
         if (!level.isClientSide) {
             BlockEntity blockEntity = level.getBlockEntity(pos);

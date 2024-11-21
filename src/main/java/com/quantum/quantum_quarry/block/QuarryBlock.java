@@ -134,4 +134,11 @@ public class QuarryBlock extends Block implements EntityBlock {
         level.setBlock(pos, state.setValue(POWERED, isPowered), 3);
         LOGGER.info("Quarry Block Redstone state changed at {}: Powered = {}", pos, isPowered);
     }
+
+    private void notifyQuarryBlock(Level level, BlockPos pos, boolean isPowered) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof QuarryBlockEntity quarryEntity) {
+            quarryEntity.updateMinerState(pos, true);
+        }
+    }
 }
