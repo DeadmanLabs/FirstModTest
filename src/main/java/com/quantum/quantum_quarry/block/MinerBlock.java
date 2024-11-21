@@ -5,6 +5,7 @@ import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -103,10 +104,11 @@ public class MinerBlock extends Block implements EntityBlock {
 
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         boolean isPowered = level.hasNeighborSignal(pos);
-        if (isPowered != state.getValue(POWERED)) {
-            level.setBlock(pos, state.setValue(POWERED, isPowered), 3);
-            
+        if (!level.isClientSide) {
+            LOGGER.info("Miner Block Redstone State Changed at {}: Powered = {}", pos, isPowered);
+            level.updateNeighborsAt(pos, this);
         }
         if (!level.isClientSide) {
             BlockEntity blockEntity = level.getBlockEntity(pos);
@@ -128,5 +130,20 @@ public class MinerBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean movedByPiston) {
         super.onRemove(state, level, pos, newState, movedByPiston);
         level.invalidateCapabilities(pos);
+    }
+
+    @Override
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return 15;
+    }
+
+    @Override
+    public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return 15;
+    }
+
+    @Override
+    public boolean isSignalSource(BlockState state) {
+        return true;
     }
 }

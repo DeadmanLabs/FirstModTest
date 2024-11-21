@@ -49,6 +49,7 @@ import com.quantum.quantum_quarry.helpers.AlternateDimension.ChunkMiner;
 import com.quantum.quantum_quarry.init.BlockEntities;
 import com.quantum.quantum_quarry.world.inventory.ScreenMenu;
 import com.quantum.quantum_quarry.procedures.FindCore;
+import com.quantum.quantum_quarry.block.QuarryBlock;
 
 import io.netty.buffer.Unpooled;
 
@@ -59,6 +60,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     public static final int TANK_CAPACITY = 20000;
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
     public BlockPos location;
+    private boolean isRedstoneReceiving;
 
     public int mode;
     public int blocksMined;
@@ -83,6 +85,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     }
 
     public static void tick(Level level, BlockPos pos, BlockState state, QuarryBlockEntity blockEntity) {
+        LOGGER.info("Quarry Redstone State: Powered = {}", state.getValue(QuarryBlock.POWERED));
         if (!level.isClientSide && blockEntity.owner != null && level instanceof ServerLevel serverLevel && blockEntity.manager != null) {
             Player player = serverLevel.getPlayerByUUID(blockEntity.owner);
             if (player != null) {
@@ -96,7 +99,7 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                 if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
                     ItemStack item = blockEntity.manager.itemsToGive.poll();
                     FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
-                    if (item != null && blockEntity.energyStorage.extractEnergy(1, true) == 1) {
+                    if (item != null && evaluateRedstone(blockEntity.mode, state.getValue(QuarryBlock.POWERED)) && blockEntity.energyStorage.extractEnergy(1, true) == 1) {
                         blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
                         blockEntity.blocksMined = blockEntity.manager.minedBlocks;

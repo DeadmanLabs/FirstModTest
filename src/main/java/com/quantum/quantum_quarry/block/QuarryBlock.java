@@ -129,17 +129,9 @@ public class QuarryBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public boolean hasAnalogOutputSignal(BlockState state) {
-        return true;
-    }
-
-    @Override
-    public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        BlockEntity tileEntity = level.getBlockEntity(pos);
-        if (tileEntity instanceof QuarryBlockEntity quarryEntity) {
-            return AbstractContainerMenu.getRedstoneSignalFromContainer(quarryEntity);
-        } else {
-            return 0;
-        }
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving) {
+        boolean isPowered = level.hasNeighborSignal(pos);
+        level.setBlock(pos, state.setValue(POWERED, isPowered), 3);
+        LOGGER.info("Quarry Block Redstone state changed at {}: Powered = {}", pos, isPowered);
     }
 }
