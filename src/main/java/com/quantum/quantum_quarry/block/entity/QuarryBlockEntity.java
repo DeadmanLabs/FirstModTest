@@ -88,37 +88,27 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                         evaluateRedstone(blockEntity) && 
                         blockEntity.energyStorage.extractEnergy(1, true) == 1
                     ) {
-                        boolean mined = blockEntity.manager.mineNextBlock(blockEntity.bookSlot);
-                        if (!mined) {
-                            blockEntity.manager.startMining(blockEntity.bookSlot, blockEntity.biomeSlot);
-                            mined = blockEntity.manager.mineNextBlock(blockEntity.bookSlot);
-                        }
-                        blockEntity.energyStorage.extractEnergy(1, false);
-                        blockEntity.manager.minedBlocks++;
-                        blockEntity.blocksMined = blockEntity.manager.minedBlocks;
-                        blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
-
-                        //Insert logic
+                        boolean canMine = true;
                         if (!blockEntity.manager.itemsToGive.isEmpty()) {
                             BlockPos[] storages = FindCore.findStorage(level, core);
-                            blockEntity.manager.itemsToGive.removeIf(item -> {
+                            canMine = blockEntity.manager.itemsToGive.removeIf(item -> {
                                 boolean inserted = false;
-                                for (BlockPos storage : storages) {
+                                for (BlockPos storage: storages) {
                                     if (FindCore.insertItem(level, storage, item)) {
                                         inserted = true;
                                         break;
                                     }
                                 }
                                 if (!inserted) {
-                                    LOGGER.warn("Failed to insert {} x {} anywhere!", item.getCount(), item.getDisplayName());
-                                    level.addFreshEntity(new ItemEntity(level, core.getX() + 0.5, core.getY() + 1, core.getZ() + 0.5, item));
+                                    LOGGER.warn("Failed to insert {} x {} anywhere! Halting mining!", item.getCount(), item.getDisplayName());
+                                    return false;
                                 }
-                                return inserted;
+                                return true;
                             });
                         }
                         if (!blockEntity.manager.fluidsToGive.isEmpty()) {
                             BlockPos[] tanks = FindCore.findFluidStorage(level, core);
-                            blockEntity.manager.fluidsToGive.removeIf(fluid -> {
+                            canMine = blockEntity.manager.fluidsToGive.removeIf(fluid -> {
                                 boolean inserted = false;
                                 for (BlockPos tank : tanks) {
                                     int remaining = FindCore.insertFluid(level, tank, fluid);
@@ -131,9 +121,27 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
                                 }
                                 if (!inserted) {
                                     LOGGER.warn("Could not insert fluid: {} (remaining: {} mb)", fluid.getFluidType(), fluid.getAmount());
+                                    //return false;
                                 }
-                                return inserted;
+                                return true;
                             });
+                        }
+                        if (canMine) {
+                            boolean mined = blockEntity.manager.mineNextBlock(blockEntity.bookSlot);
+                            if (!mined) {
+                                blockEntity.manager.startMining(blockEntity.bookSlot, blockEntity.biomeSlot);
+                                mined = blockEntity.manager.mineNextBlock(blockEntity.bookSlot);
+                            }
+                            if (mined) {
+                                blockEntity.energyStorage.extractEnergy(1, false);
+                                blockEntity.manager.minedBlocks++;
+                                blockEntity.blocksMined = blockEntity.manager.minedBlocks;
+                                blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
+                            } else {
+                                LOGGER.warn("No blocks available to mine or no valid mining target!");
+                            }
+                        } else {
+                            LOGGER.info("Mining Halted: storage unavailable for items or fluids.");
                         }
                     }
                 }
