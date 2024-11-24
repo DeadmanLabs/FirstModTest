@@ -151,8 +151,14 @@ public class ChunkMiner {
                 itemsToGive.addAll(drops);
             }
         } else {
-            //Kind of risky since if we have an empty chunk, this can lead to thousands of calls
-            incrementNextBlockToMine();
+            while (block == Blocks.AIR) {
+                incrementNextBlockToMine();
+                if (currentChunk == null || nextBlockToMine == null) {
+                    return false;
+                }
+                state = currentChunk.getBlockState(nextBlockToMine);
+                block = state.getBlock();
+            }
             return mineNextBlock(enchants);
         }
         incrementNextBlockToMine();
