@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.Entity;
@@ -95,11 +96,47 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
             public boolean mayPlace(ItemStack stack) {
                 return stack.getItem() == Items.ENCHANTED_BOOK;
             }
+
+            @Override
+            public void set(ItemStack stack) {
+                if (stack != null && stack.getItem() != Items.AIR) {
+                    LOGGER.info("Set Slot 0 to {} x {}", stack.getCount(), stack.getItem());
+                    if (boundBlockEntity != null && boundBlockEntity instanceof QuarryBlockEntity quarryEntity) {
+                        quarryEntity.setEnchants(stack);
+                        LOGGER.info("Quarry Set!");
+                    }
+                } else {
+                    LOGGER.info("Set Slot 0 to Empty!");
+                    if (boundBlockEntity != null && boundBlockEntity instanceof QuarryBlockEntity quarryEntity) {
+                        quarryEntity.setEnchants(null);
+                        LOGGER.info("Quarry Set!");
+                    }
+                }
+                super.set(stack);
+            }
         }));
         this.customSlots.put(1, this.addSlot(new SlotItemHandler(internal, 1, 6, 38) {
             @Override
             public boolean mayPlace(ItemStack stack) {
                 return stack.getItem() == ModItems.BIOME_MARKER.get();
+            }
+
+            @Override
+            public void set(ItemStack stack) {
+                if (stack != null && stack.getItem() != Items.AIR) {
+                    LOGGER.info("Set Slot 1 to {} x {}", stack.getCount(), stack.getItem());
+                    if (boundBlockEntity != null && boundBlockEntity instanceof QuarryBlockEntity quarryEntity) {
+                        quarryEntity.setBiome(stack);
+                        LOGGER.info("Quarry Set!");
+                    }
+                } else {
+                    LOGGER.info("Set Slot 1 to Empty!");
+                    if (boundBlockEntity != null && boundBlockEntity instanceof QuarryBlockEntity quarryEntity) {
+                        quarryEntity.setEnchants(null);
+                        LOGGER.info("Quarry Set!");
+                    }
+                }
+                super.set(stack);
             }
         }));
         for (int row = 0; row < 3; ++row) {
@@ -156,6 +193,11 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
                 slot.set(ItemStack.EMPTY);
             } else {
                 slot.setChanged();
+                if (slot.getItem() == null) {
+                    LOGGER.info("Slot {} is now empty.", index);
+                } else {
+                    LOGGER.info("Slot {} now contains {} x {}", index, slot.getItem().getCount(), slot.getItem().getHoverName().toString());
+                }
             }
             if (itemstack1.getCount() == itemstack.getCount()) {
                 return ItemStack.EMPTY;
@@ -228,6 +270,11 @@ public class ScreenMenu extends AbstractContainerMenu implements Supplier<Map<In
                         slot1.setByPlayer(p_38904.split(p_38904.getCount()));
                     }
                     slot1.setChanged();
+                    if (slot1.getItem() == null) {
+                        LOGGER.info("Slot {} is now empty.", i);
+                    } else {
+                        LOGGER.info("Slot {} now contains {} x {}", i, slot1.getItem().getCount(), slot1.getItem().getHoverName().toString());
+                    }
                     flag = true;
                     break;
                 }

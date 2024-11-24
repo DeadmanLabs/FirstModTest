@@ -20,8 +20,11 @@ import net.minecraft.world.level.Level;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -42,6 +45,10 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import java.util.Optional;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import com.google.common.collect.ImmutableList; 
 
 public class ChunkMiner {
     private static final Logger LOGGER = LoggerFactory.getLogger(ChunkMiner.class);
@@ -54,24 +61,36 @@ public class ChunkMiner {
     public DimensionType dimension = null;
     public int minedBlocks = 0;
     private ChunkPos currentPos = null;
+    private LevelChunk currentChunk = null;
+    private BlockPos.MutableBlockPos nextBlockToMine = null;
+
+    private static final List<Item> potentialTools = ImmutableList.of(
+        Items.DIAMOND_PICKAXE,
+        Items.DIAMOND_AXE,
+        Items.DIAMOND_SHOVEL,
+        Items.DIAMOND_HOE,
+        Items.DIAMOND_SWORD
+    );
+    
 
     public ChunkMiner(ServerLevel level) {
         this.level = level;
     }
 
-    public void startMining() {
+    public void startMining(ItemStack enchants, ItemStack biome) {
         ChunkPos randomPos = getRandomChunkPos();
         LevelChunk chunk = loadChunk(randomPos, null);
         if (chunk != null) {
-            simulateMining(chunk);
-            /*
-            while (this.itemsToGive.size() <= 0) {
-                ChunkPos randomSecond = getRandomChunkPos();
-                LOGGER.info("Loaded chunk at position: {} in dimension {} was empty, retrying...", randomSecond, chunk.getLevel().dimension());
-                chunk = loadChunk(randomSecond, chunk.getLevel().dimension());
-            }
-            */
-            unloadChunk(chunk);
+            currentChunk = chunk;
+            currentPos = randomPos;
+            nextBlockToMine = new BlockPos.MutableBlockPos(
+                chunk.getPos().getMinBlockX(),
+                level.getMinBuildHeight(),
+                chunk.getPos().getMinBlockZ()
+            );
+            currentBiome = getBiomeOfChunk(level, randomPos);
+            currentHolder = getBiomeHolderOfChunk(level, randomPos);
+            LOGGER.info("Started mining chunk: {}", randomPos);
         }
     }
 
@@ -115,81 +134,66 @@ public class ChunkMiner {
         LOGGER.info("Unloaded chunk at position: {} in dimension: {}", chunk.getPos(), targetLevel.dimension().location());
     }
 
-    private void simulateMining(LevelChunk chunk, int fortune) {
-        for (BlockPos pos : BlockPos.betweenClosed(chunk.getPos().getMinBlockX(), level.getMinBuildHeight(), chunk.getPos().getMinBlockZ(), chunk.getPos().getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getPos().getMaxBlockZ())) {
-            BlockState state = chunk.getBlockState(pos);
-            Block block = state.getBlock();
-            if (block != Blocks.AIR) {
-                FluidState fluidState = state.getFluidState();
-                if (!fluidState.isEmpty() && fluidState.isSource()) {
-                    FluidStack fluidStack = new FluidStack(fluidState.getType(), 1000);
-                    fluidsToGive.add(fluidStack);
-                }
-                else {
-                    BlockEntity blockEntity = chunk.getBlockEntity(pos);
-                        if (fortune > 0) {
-                            List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity, null, getFortuneTool(level, fortune));
-                            itemsToGive.addAll(drops);
-                        }
+    public boolean mineNextBlock(ItemStack enchants) {
+        if (currentChunk == null || nextBlockToMine == null) {
+            return false;
+        }
+        BlockState state = currentChunk.getBlockState(nextBlockToMine);
+        Block block = state.getBlock();
+        if (block != Blocks.AIR) {
+            FluidState fluidState = state.getFluidState();
+            if (!fluidState.isEmpty() && fluidState.isSource()) {
+                FluidStack fluidStack = new FluidStack(fluidState.getType(), 1000);
+                fluidsToGive.add(fluidStack);
+            } else { //We are assuming its impossible to have a block and fluid source at the same position
+                BlockEntity blockEntity = currentChunk.getBlockEntity(nextBlockToMine);
+                List<ItemStack> drops = Block.getDrops(state, level, nextBlockToMine, blockEntity, null, getEnchantedTool(level, state, enchants));
+                itemsToGive.addAll(drops);
+            }
+        } else {
+            //Kind of risky since if we have an empty chunk, this can lead to thousands of calls
+            incrementNextBlockToMine();
+            return mineNextBlock(enchants);
+        }
+        incrementNextBlockToMine();
+        return true;
+    }
+
+    private void incrementNextBlockToMine() {
+        if (nextBlockToMine == null || currentChunk == null) {
+            return;
+        }
+        nextBlockToMine.move(0, 1, 0);
+        if (nextBlockToMine.getY() >= level.getMaxBuildHeight()) {
+            nextBlockToMine.move(1, level.getMinBuildHeight() - nextBlockToMine.getY(), 0);
+            if (nextBlockToMine.getX() > currentChunk.getPos().getMaxBlockX()) {
+                nextBlockToMine.move(currentChunk.getPos().getMinBlockX() - nextBlockToMine.getX(), 0, 1);
+                if (nextBlockToMine.getZ() > currentChunk.getPos().getMaxBlockZ()) {
+                    unloadChunk(currentChunk);
+                    currentChunk = null;
+                    LOGGER.info("Finished mining chunk: {}", currentPos);
                 }
             }
         }
     }
 
-    private void simulateSilktouchMining(LevelChunk chunk) {
-        for (BlockPos pos : BlockPos.betweenClosed(chunk.getPos().getMinBlockX(), level.getMinBuildHeight(), chunk.getPos().getMinBlockZ(), chunk.getPos().getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getPos().getMaxBlockZ())) {
-            BlockState state = chunk.getBlockState(pos);
-            Block block = state.getBlock();
-            if (block != Blocks.AIR) {
-                FluidState fluidState = state.getFluidState();
-                if (!fluidState.isEmpty() && fluidState.isSource()) {
-                    FluidStack fluidStack = new FluidStack(fluidState.getType(), 1000);
-                    fluidsToGive.add(fluidStack);
-                }
-                else {
-                    BlockEntity blockEntity = chunk.getBlockEntity(pos);
-                    List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity, null, getSilkTool(level));
-                    itemsToGive.addAll(drops);
-                }
-            }
-        }
-    }
-
-    private void simulateMining(LevelChunk chunk) {
-        for (BlockPos pos : BlockPos.betweenClosed(chunk.getPos().getMinBlockX(), level.getMinBuildHeight(), chunk.getPos().getMinBlockZ(), chunk.getPos().getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getPos().getMaxBlockZ())) {
-            BlockState state = chunk.getBlockState(pos);
-            Block block = state.getBlock();
-            if (block != Blocks.AIR) {
-                FluidState fluidState = state.getFluidState();
-                if (!fluidState.isEmpty() && fluidState.isSource()) {
-                    FluidStack fluidStack = new FluidStack(fluidState.getType(), 1000);
-                    fluidsToGive.add(fluidStack);
-                }
-                else {
-                    BlockEntity blockEntity = chunk.getBlockEntity(pos);
-                    List<ItemStack> drops = Block.getDrops(state, level, pos, blockEntity);
-                    itemsToGive.addAll(drops);
-                }
-            }
-        }
-    }
-
-    private ItemStack getFortuneTool(ServerLevel level, int fortuneLevel) {
-        
+    private ItemStack getEnchantedTool(ServerLevel level, BlockState state, ItemStack enchants) {
         ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE);
-        ResourceKey<Enchantment> fortuneKey = Enchantments.FORTUNE;
-        Registry<Enchantment> enchantmentRegistry = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
-        Optional<Holder.Reference<Enchantment>> fortuneHolder = enchantmentRegistry.getHolder(fortuneKey);
-        fortuneHolder.ifPresent(holder -> tool.enchant(holder, fortuneLevel));
-        return tool;
-    }
-
-    private ItemStack getSilkTool(ServerLevel level) {
-        ItemStack tool = new ItemStack(Items.DIAMOND_PICKAXE);
-        ResourceKey<Enchantment> silktouchKey = Enchantments.SILK_TOUCH;
-        Registry<Enchantment> enchantmentRegistry = level.registryAccess().registryOrThrow(Registries.ENCHANTMENT);
-        Optional<Holder.Reference<Enchantment>> silktouchHolder = enchantmentRegistry.getHolder(silktouchKey);
-        silktouchHolder.ifPresent(holder -> tool.enchant(holder, 1));
+        for (Item toolItem : potentialTools) {
+            ItemStack toolStack = new ItemStack(toolItem);
+            if (toolStack.isCorrectToolForDrops(state)) {
+                tool = toolStack;
+                break;
+            }
+        }
+        if (enchants != null && enchants.getItem() == Items.ENCHANTED_BOOK) {
+            ItemEnchantments enchantments = EnchantmentHelper.getEnchantmentsForCrafting(enchants);
+            for (var entry : enchantments.entrySet()) {
+                Holder<Enchantment> enchantmentHolder = entry.getKey();
+                int enchantLevel = enchantments.getLevel(enchantmentHolder);
+                tool.enchant(enchantmentHolder, enchantLevel);
+            }
+        }
         return tool;
     }
 

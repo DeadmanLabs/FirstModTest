@@ -32,6 +32,7 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -52,6 +53,8 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     private Queue<FluidStack> fluidStorage = new LinkedList<>();
     public BlockPos location;
     private final Map<BlockPos, Boolean> minerRedstoneStates = new HashMap<>();
+    private ItemStack bookSlot;
+    private ItemStack biomeSlot;
 
     public int mode;
     public int blocksMined;
@@ -79,43 +82,59 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         if (!level.isClientSide && blockEntity.owner != null && level instanceof ServerLevel serverLevel && blockEntity.manager != null) {
             Player player = serverLevel.getPlayerByUUID(blockEntity.owner);
             if (player != null) {
-                if (blockEntity.manager.itemsToGive.size() <= 0) {
-                    blockEntity.manager.startMining();
-                    blockEntity.biomeText = blockEntity.manager.getHumanReadableBiomeName(); // Mod
-                    blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
-                    //LOGGER.info("Biome Set: {}", blockEntity.biomeText);
-                }
                 BlockPos core = FindCore.execute(level, pos.getX(), pos.getY(), pos.getZ()); //ensure that we are using the core for validation
-                if (FindCore.validateStructure(level, core)) { //We can generate the chunk without having a valid structure to save ticks
-                    ItemStack item = blockEntity.manager.itemsToGive.poll();
-                    FluidStack fluid = blockEntity.manager.fluidsToGive.poll();
-                    if (item != null && 
+                if (FindCore.validateStructure(level, core)) {
+                    if (
                         evaluateRedstone(blockEntity) && 
                         blockEntity.energyStorage.extractEnergy(1, true) == 1
                     ) {
+                        boolean mined = blockEntity.manager.mineNextBlock(blockEntity.bookSlot);
+                        if (!mined) {
+                            blockEntity.manager.startMining(blockEntity.bookSlot, blockEntity.biomeSlot);
+                            mined = blockEntity.manager.mineNextBlock(blockEntity.bookSlot);
+                        }
                         blockEntity.energyStorage.extractEnergy(1, false);
                         blockEntity.manager.minedBlocks++;
                         blockEntity.blocksMined = blockEntity.manager.minedBlocks;
                         blockEntity.level.sendBlockUpdated(blockEntity.worldPosition, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
-                        BlockPos[] storages = FindCore.findStorage(level, core);
-                        for (BlockPos storage : storages) {
-                            if (FindCore.insertItem(level, storage, item)) {
-                                break;
-                            }
-                            //So keep going if the queue still contains items, but dont stop even if the storages are full.
-                        }
-                        if (fluid != null) {
-                            BlockPos[] tanks = FindCore.findFluidStorage(level, core);
-                            for (BlockPos tank : tanks) {
-                                if (FindCore.insertFluid(level, tank, fluid) == 0) {
-                                    break;
+
+                        //Insert logic
+                        if (!blockEntity.manager.itemsToGive.isEmpty()) {
+                            BlockPos[] storages = FindCore.findStorage(level, core);
+                            blockEntity.manager.itemsToGive.removeIf(item -> {
+                                boolean inserted = false;
+                                for (BlockPos storage : storages) {
+                                    if (FindCore.insertItem(level, storage, item)) {
+                                        inserted = true;
+                                        break;
+                                    }
                                 }
-                                //If we failed to insert all the fluid, too bad!
-                            }
+                                if (!inserted) {
+                                    LOGGER.warn("Failed to insert {} x {} anywhere!", item.getCount(), item.getDisplayName());
+                                    level.addFreshEntity(new ItemEntity(level, core.getX() + 0.5, core.getY() + 1, core.getZ() + 0.5, item));
+                                }
+                                return inserted;
+                            });
                         }
-                    }
-                    else {
-                        LOGGER.warn("No Stack, Redstone is off, or Not enough energy!");
+                        if (!blockEntity.manager.fluidsToGive.isEmpty()) {
+                            BlockPos[] tanks = FindCore.findFluidStorage(level, core);
+                            blockEntity.manager.fluidsToGive.removeIf(fluid -> {
+                                boolean inserted = false;
+                                for (BlockPos tank : tanks) {
+                                    int remaining = FindCore.insertFluid(level, tank, fluid);
+                                    if (remaining == 0) {
+                                        inserted = true;
+                                        break;
+                                    } else {
+                                        fluid.setAmount(remaining);
+                                    }
+                                }
+                                if (!inserted) {
+                                    LOGGER.warn("Could not insert fluid: {} (remaining: {} mb)", fluid.getFluidType(), fluid.getAmount());
+                                }
+                                return inserted;
+                            });
+                        }
                     }
                 }
             }
@@ -307,5 +326,13 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     public void updateMinerState(BlockPos minerPos, boolean isPowered) {
         LOGGER.info("Miner @ {} Changed Redstone State to Powered = {}", minerPos, isPowered);
         minerRedstoneStates.put(minerPos, isPowered);
+    }
+
+    public void setEnchants(ItemStack enchantedBook) {
+        this.bookSlot = enchantedBook;
+    }
+
+    public void setBiome(ItemStack biomeMarker) {
+        this.biomeSlot = biomeMarker;
     }
 }
