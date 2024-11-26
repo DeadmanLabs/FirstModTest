@@ -27,6 +27,10 @@ public class Config
             .comment("How do you want the blocks to generate? (0=Virtual Dimension, 1=Real Dimension, 2=Protochunks)")
             .defineInRange("blockGenMode", 0, 0, 2); //Change max to number of modes
 
+    public static final ModConfigSpec.IntValue POWER_PER_MINE = BUILDER
+            .comment("How much power does mining 1 block consume?")
+            .defineInRange("powerConsumption", 20000, 1, Integer.MAX_VALUE);
+
     // a list of strings that are treated as resource locations for items
     private static final ModConfigSpec.ConfigValue<List<? extends String>> ITEM_STRINGS = BUILDER
             .comment("A list of items to log on common setup.")

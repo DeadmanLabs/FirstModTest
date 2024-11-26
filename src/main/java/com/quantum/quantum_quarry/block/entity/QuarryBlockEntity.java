@@ -164,6 +164,17 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
     }
 
     @Override
+    public void onLoad() {
+        super.onLoad();
+        if (!this.level.isClientSide) {
+            this.setChanged();
+            if (this.owner != null && this.manager == null && this.level instanceof ServerLevel serverLevel) {
+                this.manager = new ChunkMiner(serverLevel);
+            }
+        }
+    }
+
+    @Override
     protected void saveAdditional(CompoundTag tag, Provider provider) {
         super.saveAdditional(tag, provider);
         if (!this.trySaveLootTable(tag)) {
@@ -173,6 +184,9 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         tag.putInt("mode", this.mode);
         tag.putInt("mined", this.blocksMined);
         tag.putString("BiomeText", this.biomeText);
+        if (this.owner != null) {
+            tag.putUUID("Owner", this.owner);
+        }
     }
 
     @Override
@@ -184,6 +198,9 @@ public class QuarryBlockEntity extends RandomizableContainerBlockEntity implemen
         ContainerHelper.loadAllItems(tag, this.stacks, provider);
         if (tag.get("energyStorage") instanceof IntTag intTag) {
             energyStorage.deserializeNBT(provider, intTag);
+        }
+        if (tag.contains("Owner")) {
+            this.owner = tag.getUUID("Owner");
         }
         this.mode = tag.getInt("mode");
         this.blocksMined = tag.getInt("mined");
