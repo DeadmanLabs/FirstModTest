@@ -1,0 +1,12 @@
+{
+    "parent": "block/cube",
+    "textures": {
+        "down": "quantum_quarry:block/globe_bottom",
+        "up": "quantum_quarry:block/globe_top_resize",
+        "north": "quantum_quarry:block/globe_side_resize",
+        "south": "quantum_quarry:block/globe_side_resize",
+        "east": "quantum_quarry:block/globe_side_resize",
+        "west": "quantum_quarry:block/globe_side_resize"
+    },
+    "render_type": "transparent"
+}

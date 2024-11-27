@@ -1,0 +1,27 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "category": "misc",
+    "pattern": [
+        "aba",
+        "cdc",
+        "aba"
+    ],
+    "key": {
+        "a": {
+            "tag": "c:dyes"
+        },
+        "b": {
+            "item": "minecraft:iron_ingot"
+        },
+        "c": {
+            "item": "minecraft:gold_ingot"
+        },
+        "d": {
+            "tag": "minecraft:saplings"
+        }
+    },
+    "result": {
+        "id": "quantum_quarry:biome_marker",
+        "count": 1
+    }
+}
